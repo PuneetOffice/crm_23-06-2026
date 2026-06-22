@@ -1,0 +1,14 @@
+# Visual Studio cache / user-specific files
+.vs/
+*.vsidx
+*.suo
+*.wsuo
+*.user
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Node
+node_modules/
+build/

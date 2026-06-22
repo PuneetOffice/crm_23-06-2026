@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body {
+	font-family: "Poppins";
+}
+
+@layer base {
+  html {
+    /* zoom: 0.8 renders the app at 80% scale on every screen/browser zoom level.
+       100vh/100vw are NOT scaled by zoom in most browsers, so the visible area
+       after zoom is only 80% of the screen. Compensate with 125% dimensions so
+       that: 125% × zoom(0.8) = 100% → content fills the full screen perfectly. */
+    zoom: 0.8;
+    width: 125vw;
+    height: 125vh;
+    overflow: hidden;
+    @apply overscroll-none;
+  }
+
+  body, #root {
+    @apply overscroll-none touch-pan-y overflow-x-hidden;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px; /* Prevent zoom on input focus */
+  }
+
+  input, textarea, select {
+    font-size: 16px;
+  }
+
+  /* Ensure touch targets are at least 44px */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improve table scrolling on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Smooth scrolling for better mobile experience */
+* {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent accidental selection on mobile */
+body {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, button, a {
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Visible custom scrollbars for horizontal table containers */
+.visible-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.9) rgba(226, 232, 240, 0.9);
+}
+
+.visible-scrollbar::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+
+.visible-scrollbar::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.9);
+  border-radius: 9999px;
+}
+
+.visible-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.9);
+  border-radius: 9999px;
+  border: 3px solid rgba(226, 232, 240, 0.9);
+}
+
+.visible-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}

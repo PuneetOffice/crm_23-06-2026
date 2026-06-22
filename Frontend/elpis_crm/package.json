@@ -1,0 +1,79 @@
+{
+  "name": "elpis_crm",
+  "version": "1.2.0.0",
+  "private": true,
+  "dependencies": {
+    "@azure/msal-browser": "^4.30.0",
+    "@azure/msal-react": "^3.0.29",
+    "@shadcn/ui": "^0.0.4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "assert": "^2.1.0",
+    "axios": "^1.12.2",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
+    "country-state-city": "^3.2.1",
+    "crypto-browserify": "^3.12.1",
+    "dompurify": "^3.0.4",
+    "exceljs": "^4.4.0",
+    "gsap": "^3.13.0",
+    "https-browserify": "^1.0.0",
+    "jwt-decode": "^3.1.2",
+    "lodash": "^4.18.1",
+    "lodash.template": "^4.18.1",
+    "lucide-react": "^0.544.0",
+    "process": "^0.11.10",
+    "querystring-es3": "^0.2.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.2.5",
+    "react-email": "^4.3.1",
+    "react-funnel-pipeline": "^0.2.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.9.2",
+    "react-scripts": "^5.0.1",
+    "react-toastify": "^11.0.5",
+    "react-window": "^2.2.7",
+    "recharts": "^3.3.0",
+    "sonner": "^2.0.7",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "tesseract.js": "^7.0.0",
+    "url": "^0.11.4",
+    "util": "^0.12.5",
+    "vm-browserify": "^1.1.2",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18"
+  }
+}
