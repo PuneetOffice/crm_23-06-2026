@@ -35,7 +35,7 @@ namespace Elpis_CRM.Controllers
         /// <returns>Paginated list of contacts with total count</returns>
         /// <response code="200">Contacts retrieved successfully</response>
         [HttpGet]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,Roles = "Admin,Manager,User")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
         public async Task<IActionResult> GetAllAsync(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 150,
@@ -92,7 +92,7 @@ namespace Elpis_CRM.Controllers
             var contacts = await _contactService.GetContactsByCreatedAtAsync(createdAt);
             return Ok(contacts);
         }
-        
+
         /// <summary>
         /// Retrieves all distinct tags associated with contacts.
         /// </summary>
@@ -205,12 +205,15 @@ namespace Elpis_CRM.Controllers
         /// Creates a new contact.
         /// </summary>
         /// <param name="contact">Contact data.</param>
+        /// <param name="generateEnquiryNo">If true, the system generates a sequential EnquiryNo (e.g. EITSPL-EQ-003).</param>
         /// <returns>The newly created contact.</returns>
         /// <response code="200">Contact created successfully</response>
         /// <response code="400">Invalid contact data</response>
         [HttpPost]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
-        public async Task<ActionResult<ContactModel>> CreateAsync([FromBody] ContactModel contact)
+        public async Task<ActionResult<ContactModel>> CreateAsync(
+    [FromBody] ContactModel contact,
+    [FromQuery] bool generateEnquiryNo = false)
         {
             if (contact == null)
             {
@@ -219,14 +222,26 @@ namespace Elpis_CRM.Controllers
 
             try
             {
-                var created = await _contactService.AddAsync(contact);
+                var created = await _contactService.AddAsync(contact, generateEnquiryNo);
                 return Ok(created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message, detail = ex.InnerException?.Message });
+                return StatusCode(500, new
+                {
+                    message = "An unexpected error occurred.",
+                    detail = ex.InnerException?.Message ?? ex.Message
+                });
             }
         }
+
 
         /// <summary>
         /// Updates an existing contact.
@@ -284,26 +299,37 @@ namespace Elpis_CRM.Controllers
             });
         }
 
-         [HttpGet("{contactId:long}/image/{imageType}")]
-            [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
-            public async Task<IActionResult> GetImage(long contactId, string imageType)
+        [HttpGet("{contactId:long}/image/{imageType}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
+        public async Task<IActionResult> GetImage(long contactId, string imageType)
+        {
+            var contact = await _contactService.GetByIdAsync(contactId);
+
+            if (contact == null)
+                return NotFound("Contact not found.");
+
+            byte[]? imageBytes = imageType.ToLower() switch
             {
-                var contact = await _contactService.GetByIdAsync(contactId);
+                "front" => contact.FrontImage,
+                "back" => contact.BackImage,
+                _ => null
+            };
 
-                if (contact == null)
-                    return NotFound("Contact not found.");
+            if (imageBytes == null)
+                return NotFound($"{imageType} image not found.");
 
-                byte[]? imageBytes = imageType.ToLower() switch     {
-                    "front" => contact.FrontImage,
-                    "back" => contact.BackImage,
-                    _ => null     };
+            return File(imageBytes, "image/jpeg");
+        }
 
-                if (imageBytes == null)
-                    return NotFound($"{imageType} image not found.");
+        [HttpPost("enquiry-numbers")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
+        public async Task<ActionResult<List<string>>> GetEnquiryNumbers(
+    [FromBody] List<long> contactIds)
+        {
+            var enquiryNumbers = await _contactService.GetEnquiryNumbersAsync(contactIds);
+            return Ok(enquiryNumbers);
+        }
 
-                return File(imageBytes, "image/jpeg");
-            }
- 
 
     }
 }

@@ -69,7 +69,8 @@ namespace Elpis_CRM.Controllers
                         (c.WorkEmail != null && c.WorkEmail.ToLower().Contains(t)) ||
                         (c.WorkPhone != null && c.WorkPhone.ToLower().Contains(t)) ||
                         (c.Mobile    != null && c.Mobile.ToLower().Contains(t))    ||
-                        (c.Account   != null && c.Account.ToLower().Contains(t)));
+                        (c.Account   != null && c.Account.ToLower().Contains(t))   ||
+                        (c.EnquiryNo != null && c.EnquiryNo.ToLower().Contains(t)));
                 }
 
                 if (!string.IsNullOrWhiteSpace(contactStatus))
@@ -115,7 +116,8 @@ namespace Elpis_CRM.Controllers
                         c.Account,
                         c.Status,
                         c.Territory,
-                        c.Tags
+                        c.Tags,
+                        c.EnquiryNo
                     })
                     .ToListAsync();
 
@@ -147,6 +149,7 @@ namespace Elpis_CRM.Controllers
                         ("Account", c.Account),
                         ("Status", c.Status),
                         ("Territory", c.Territory),
+                        ("Enquiry No", c.EnquiryNo),
                         ("Tags", c.Tags)));
                 }
 

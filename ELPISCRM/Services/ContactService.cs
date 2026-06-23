@@ -17,6 +17,53 @@ namespace Elpis_CRM.Services
             _contactContext = context;
         }
 
+        private const string EnquiryNoPrefix = "EITSPL-EQ-";
+
+        /// <summary>
+        /// Generates the next sequential EnquiryNo (e.g. "EITSPL-EQ-003").
+        /// Looks at the highest existing numeric suffix across all contacts and increments it.
+        /// Retries on a rare race-condition collision (two requests generating the same number at once).
+        /// </summary>
+        private async Task<string> GenerateNextEnquiryNoAsync()
+        {
+            const int maxAttempts = 5;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                // Pull existing EnquiryNo values that match our prefix.
+                var existing = await _contactContext.Contacts
+                    .Where(c => c.EnquiryNo != null && c.EnquiryNo.StartsWith(EnquiryNoPrefix))
+                    .Select(c => c.EnquiryNo)
+                    .ToListAsync();
+
+                var maxNumber = 0;
+                foreach (var val in existing)
+                {
+                    var suffix = val!.Substring(EnquiryNoPrefix.Length);
+                    if (int.TryParse(suffix, out var num) && num > maxNumber)
+                    {
+                        maxNumber = num;
+                    }
+                }
+
+                var nextNumber = maxNumber + 1;
+                var candidate = $"{EnquiryNoPrefix}{nextNumber:D3}";
+
+                // Make sure nobody else just took this number (basic race-condition guard).
+                var collision = await _contactContext.Contacts
+                    .AnyAsync(c => c.EnquiryNo == candidate);
+
+                if (!collision)
+                {
+                    return candidate;
+                }
+                // else loop and retry with a fresh max
+            }
+
+            // Extremely unlikely fallback: append a short random suffix to avoid blocking the request.
+            return $"{EnquiryNoPrefix}{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 1000:D3}";
+        }
+
         // Get Contacts with Pagination (optional server-side search)
         public async Task<(List<ContactModel> items, int totalCount)> GetAllAsync(int page = 1, int pageSize = 150, string? search = null)
         {
@@ -43,6 +90,7 @@ namespace Elpis_CRM.Services
                         (c.Mobile     != null && c.Mobile.ToLower().Contains(t))     ||
                         (c.Account    != null && c.Account.ToLower().Contains(t))    ||
                         (c.SalesOwner != null && c.SalesOwner.ToLower().Contains(t)) ||
+                        (c.EnquiryNo != null && c.EnquiryNo.ToLower().Contains(t)) ||
                         (c.Territory  != null && c.Territory.ToLower().Contains(t))  ||
                         (c.Tags       != null && c.Tags.ToLower().Contains(t)));
                 }
@@ -297,7 +345,7 @@ namespace Elpis_CRM.Services
         }
 
         // Create contact
-        public async Task<ContactModel> AddAsync(ContactModel contact)
+        public async Task<ContactModel> AddAsync(ContactModel contact, bool generateEnquiryNo = false)
         {
             var now = DateTime.UtcNow;
 
@@ -311,25 +359,85 @@ namespace Elpis_CRM.Services
             if (contact.LastSeenOnWeb == null) contact.LastSeenOnWeb = now;
             if (contact.LastContactedTime == null) contact.LastContactedTime = now;
 
+            // EnquiryNo is never accepted from the client on create.
+            // It is either system-generated (if requested) or left blank.
+            contact.EnquiryNo = generateEnquiryNo
+                ? await GenerateNextEnquiryNoAsync()
+                : null;
+
             await EnsureAccountIdResolvedAsync(contact);
+
+            // =====================================================
+            // Duplicate Email Check
+            // WorkEmail -> WorkEmail + Emails
+            // Emails -> WorkEmail + Emails
+            // =====================================================
+
+            var emailList = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(contact.WorkEmail))
+            {
+                emailList.Add(contact.WorkEmail.Trim().ToLower());
+            }
+
+            if (!string.IsNullOrWhiteSpace(contact.Emails))
+            {
+                emailList.AddRange(
+                    contact.Emails
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(e => e.Trim().ToLower())
+                );
+            }
+
+            emailList = emailList.Distinct().ToList();
+
+            if (emailList.Any())
+            {
+                var contacts = await _contactContext.Contacts
+                    .Select(c => new
+                    {
+                        c.WorkEmail,
+                        c.Emails
+                    })
+                    .ToListAsync();
+
+                var duplicateExists = contacts.Any(c =>
+                    emailList.Any(email =>
+                        (!string.IsNullOrWhiteSpace(c.WorkEmail) &&
+                         c.WorkEmail.Trim().ToLower() == email)
+                        ||
+                        (!string.IsNullOrWhiteSpace(c.Emails) &&
+                         c.Emails
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => x.Trim().ToLower())
+                            .Contains(email))
+                    )
+                );
+
+                if (duplicateExists)
+                {
+                    throw new InvalidOperationException("A contact with this email already exists.");
+                }
+            }
 
             // Generate ID only if not provided (manual add).
             // Import provides its own IDs from the Excel file.
             if (contact.ContactId <= 0)
             {
-                // Timestamp and random suffix to avoid duplicates within same millisecond
-                contact.ContactId = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000 + new Random().Next(0, 999);
+                contact.ContactId =
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000 +
+                    new Random().Next(0, 999);
             }
             else
             {
                 // Import: if contact with this ID already exists, update instead
                 var existing = await _contactContext.Contacts
                     .FirstOrDefaultAsync(c => c.ContactId == contact.ContactId);
+
                 if (existing != null)
                 {
                     return await UpdateAsync(contact.ContactId, contact) ?? contact;
                 }
-            
             }
 
             _contactContext.Contacts.Add(contact);
@@ -392,6 +500,7 @@ namespace Elpis_CRM.Services
             existing.LastSeenOnWeb = now;
             existing.LastContactedTime = now;
             existing.UpdatedAt = now;
+            existing.EnquiryNo = contact.EnquiryNo;
 
             await _contactContext.SaveChangesAsync();
             return existing;
@@ -461,5 +570,17 @@ namespace Elpis_CRM.Services
                 .Where(c => c.CreatedAt >= start && c.CreatedAt < end)
                 .ToListAsync();
         }
+
+        public async Task<List<string>> GetEnquiryNumbersAsync(List<long> contactIds)
+        {
+            return await _contactContext.Contacts
+                .Where(c => contactIds.Contains(c.ContactId))
+                .Select(c => c.EnquiryNo)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
+                .ToListAsync();
+        }
+
+
     }
 }
