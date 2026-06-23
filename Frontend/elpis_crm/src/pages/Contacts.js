@@ -162,15 +162,16 @@ function Contacts({
       { key: "FirstName", label: "First Name" },
       { key: "LastName", label: "Last Name" },
       { key: "Account", label: "Account" },
+      { key: "EnquiryNo", label: "Enquiry No" },
       { key: "JobTitle", label: "Job Title" },
 
-      // Contact Info
       { key: "WorkEmail", label: "Work Email" },
       { key: "WorkPhone", label: "Work Phone" },
       { key: "Mobile", label: "Mobile" },
       { key: "LinkedIn", label: "LinkedIn" },
       { key: "Facebook", label: "Facebook" },
       { key: "Twitter", label: "Twitter" },
+
       // Location
       { key: "Address", label: "Address" },
       { key: "Country", label: "Country" },
@@ -332,6 +333,7 @@ function Contacts({
     FirstName: "",
     LastName: "",
     JobTitle: "",
+    EnquiryNo: "",
     WorkEmail: "",
     WorkPhone: "",
     Mobile: "",
@@ -995,749 +997,753 @@ function Contacts({
   return (
     <div className="flex h-full w-full overflow-hidden">
       <div className="relative flex flex-col flex-1 w-full h-full min-h-0 overflow-hidden font-[poppins,sans-serif]">
-      {paginationLoading && (
-        <div className="absolute inset-0 z-40 bg-white/75 backdrop-blur-sm flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-        </div>
-      )}
-      {selected.size > 0 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-blue-50 rounded-lg sm:rounded-xl px-4 sm:px-6 py-3 sm:py-3.5 shadow-sm border border-blue-100 mb-4 w-full backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
-              {selected.size}
-            </div>
-            <span className="text-sm sm:text-base text-gray-700">selected</span>
+        {paginationLoading && (
+          <div className="absolute inset-0 z-40 bg-white/75 backdrop-blur-sm flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
           </div>
-          <div className="hidden sm:flex flex-1" />
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              className="flex-1 sm:flex-none bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
-              onClick={exportCsv}
-            >
-              Export Selected
-            </button>
-            <button
-              className="flex-1 sm:flex-none bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-50 hover:shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={exportAllCsv}
-              disabled={isExportingAll}
-            >
-              {isExportingAll ? (
-                <span className="inline-block animate-spin mr-2"></span>
-              ) : null}
-              Export All
-            </button>
-            {isAdminOnly && (
+        )}
+        {selected.size > 0 && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-blue-50 rounded-lg sm:rounded-xl px-4 sm:px-6 py-3 sm:py-3.5 shadow-sm border border-blue-100 mb-4 w-full backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+                {selected.size}
+              </div>
+              <span className="text-sm sm:text-base text-gray-700">selected</span>
+            </div>
+            <div className="hidden sm:flex flex-1" />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
-                aria-label="Delete selected"
-                className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-red-50 transition-all duration-200"
-                onClick={handleDeleteClick}
+                className="flex-1 sm:flex-none bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                onClick={exportCsv}
               >
-                <FiTrash2 className="inline mr-1" /> Delete
+                Export Selected
               </button>
-            )}
-          </div>
-        </div>
-      )}
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
-          <div className="bg-white w-full sm:w-96 rounded-2xl shadow-2xl p-6 transform animate-in zoom-in-95 duration-200">
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Confirm Delete</h4>
-              <p className="text-sm sm:text-base text-gray-600">Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteContactName || `${deleteCount} contact${deleteCount > 1 ? 's' : ''}`}</span>?</p>
-            </div>
-            <div className="flex gap-3 justify-center">
-              <button type="button" onClick={() => setShowDeleteModal(false)}
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                Cancel
-              </button>
-              <button type="button" onClick={confirmDelete}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-red-500 focus:outline-none">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Business Card Modal */}
-      {showBusinessCard && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-4 sm:p-5 transform animate-in zoom-in-95 duration-200 max-h-[86vh] overflow-hidden">
-            <div className="flex items-center justify-between gap-3 border-b border-gray-200 pb-3 mb-4">
-              <div>
-                <h4 className="text-base font-semibold text-gray-900">Business Card</h4>
-                <p className="text-xs text-gray-600 mt-1">
-                  {selectedContactDetails?.FirstName || selectedContactDetails?.firstName || ''} {selectedContactDetails?.LastName || selectedContactDetails?.lastName || ''}
-                </p>
-              </div>
               <button
-                type="button"
-                onClick={() => setShowBusinessCard(false)}
-                className="inline-flex items-center justify-center rounded-full p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-150"
-                aria-label="Close business card modal"
+                className="flex-1 sm:flex-none bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-50 hover:shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={exportAllCsv}
+                disabled={isExportingAll}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                {isExportingAll ? (
+                  <span className="inline-block animate-spin mr-2"></span>
+                ) : null}
+                Export All
               </button>
-            </div>
-
-            {businessCardLoading ? (
-              <div className="flex items-center justify-center py-10">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-              </div>
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 text-sm text-gray-700">
-                  <div>Scroll to zoom, double-click to reset</div>
-                  {businessCardImages.back && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <button
-                        type="button"
-                        onClick={() => setBusinessCardSide('front')}
-                        className={`px-3 py-2 rounded-lg transition-colors duration-150 ${businessCardSide === 'front' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                      >
-                        Front
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBusinessCardSide('back')}
-                        className={`px-3 py-2 rounded-lg transition-colors duration-150 ${businessCardSide === 'back' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                      >
-                        Back
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-gray-200 bg-gray-50 overflow-hidden shadow-sm">
-                  <div className="text-sm font-medium text-gray-900 px-4 py-3 border-b border-gray-200 bg-white">
-                    {businessCardSide === 'front' ? 'Front' : 'Back'}
-                  </div>
-                  <div
-                    className="relative overflow-auto bg-black/5 cursor-zoom-in"
-                    style={{ minHeight: '40vh', maxHeight: '56vh' }}
-                    onWheel={handleBusinessCardWheel}
-                    onDoubleClick={() => setBusinessCardZoom(1)}
-                  >
-                    {businessCardImages[businessCardSide] ? (
-                      <div className="flex items-center justify-center p-4">
-                        <img
-                          src={businessCardImages[businessCardSide]}
-                          alt={`Business Card ${businessCardSide}`}
-                          className="max-w-full max-h-[48vh] object-contain"
-                          style={{
-                            transform: `scale(${businessCardZoom})`,
-                            transformOrigin: 'center',
-                            transition: 'transform 0.15s ease-in-out',
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-[40vh] text-gray-500 text-sm">
-                        No {businessCardSide} image available.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-      {/* Contacts Table with Sticky Pagination */}
-      <div className="w-full flex-1 min-h-0 flex flex-col rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-        {/* Sticky Search Bar */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-end gap-3">
-          {localSearch && (
-            <span className="text-xs text-gray-500 whitespace-nowrap">
-              Results for "<span className="font-medium text-gray-700">{localSearch}</span>"
-            </span>
-          )}
-          <SearchBar
-            value={localSearch}
-            onChange={setLocalSearch}
-            placeholder="Search contacts..."
-            className="max-w-xs"
-          />
-        </div>
-        {/* Table Container - Scrollable with fixed height */}
-        <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-auto relative visible-scrollbar">
-          <table className="min-w-max w-full border-collapse">
-            <thead className="sticky top-0 z-30 bg-white shadow-sm" style={{ position: 'sticky', top: 0 }}>
-              <tr>
-                {/* Select All Checkbox - Touch friendly */}
-                <th className="sticky left-0 z-40 min-w-10 sm:min-w-12 w-10 sm:w-12 px-2 sm:px-3 py-3 text-center bg-gray-50">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all"
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someSelected;
-                    }}
-                    onChange={toggleAll}
-                    className="w-3 h-3 sm:w-4 sm:h-4 rounded border-gray-300 text-blue-600 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </th>
-                {/* Column Headers with Sorting */}
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className={`px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 select-none cursor-pointer hover:bg-gray-100 transition-colors duration-150 whitespace-nowrap ${col.key === "Name"
-                      ? "sticky left-10 sm:left-12 z-30 min-w-40 bg-gray-50"
-                      : "hidden sm:table-cell min-w-20 sm:min-w-32"
-                      }`}
-                    onClick={() => handleSort(col.key)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="truncate">{col.label}</span>
-                      {sortConfig.key === col.key && (
-                        <span className="text-blue-600 flex-shrink-0">
-                          {sortConfig.direction === "asc" ? "↑" : "↓"}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* Table body */}
-            <tbody className="divide-y divide-gray-100">
-              {paginatedData.map((contact, index) => (
-                <tr
-                  key={getField(contact, "ContactId") ?? getField(contact, "FirstName") + getField(contact, "LastName") ?? index}
-                  className={`transition-all duration-150 hover:bg-gray-50 ${selected.has(index) ? "bg-blue-50" : "bg-white"
-                    }`}
+              {isAdminOnly && (
+                <button
+                  aria-label="Delete selected"
+                  className="flex-1 sm:flex-none bg-white border border-red-200 text-red-600 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-red-50 transition-all duration-200"
+                  onClick={handleDeleteClick}
                 >
-                  {/* Row Selection Checkbox */}
-                  <td
-                    className="sticky left-0 bg-inherit text-center min-w-10 sm:min-w-12 w-10 sm:w-12 px-2 sm:px-3 py-3 flex items-center justify-center"
-                  >
-                    <input
-                      type="checkbox"
-                      aria-label={`Select row ${index + 1}`}
-                      checked={selected.has(index)}
-                      onChange={() => toggleRow(index)}
-                      className="w-3 h-3 sm:w-4 sm:h-4 rounded border-gray-300 text-blue-600 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </td>
-
-                  {/* Data cells */}
-                  {columns.map((col, colIdx) => {
-                    let tooltipContent = "";
-                    if (col.key === "FirstName" || col.key === "LastName") {
-                      tooltipContent = getField(contact, col.key) || "";
-                    } else if (col.key === "AccountId") {
-                      const accId = getField(contact, "AccountId");
-                      if (!accId) {
-                        tooltipContent = "No account";
-                      } else {
-                        const acct = accountsList.find((a) => String(a.AccountId ?? a.accountId ?? a.Id ?? a.id) === String(accId));
-                        tooltipContent = (acct && (acct.Name || acct.name)) ? (acct.Name ?? acct.name) : "Loading...";
-                      }
-                    } else if (col.key === "Tags") {
-                      const raw = getField(contact, "Tags") ?? "";
-                      tooltipContent = raw ? String(raw).split(/,|;/).map((t) => t.trim()).filter(Boolean).join(", ") : "-";
-                    } else {
-                      const raw = getField(contact, col.key);
-                      tooltipContent = dateFields.has(col.key) ? formatDateOnly(raw) : String(raw || "");
-                    }
-                    return (
-                      <td
-                        key={col.key}
-                        className={`px-4 py-3 text-left text-xs sm:text-sm text-gray-700 ${col.key === "Name"
-                          ? "sticky left-10 sm:left-12 min-w-40 bg-white max-w-xs overflow-hidden"
-                          : "hidden sm:table-cell bg-inherit max-w-xs truncate overflow-hidden"
-                          }`}
-                        title={tooltipContent}
-                      >
-                        {col.key === "Name" ? (
-                          <a
-                            href={`/dashboard/contacts?id=${getField(contact, "ContactId")}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleShowContactDetails(getField(contact, "ContactId"));
-                            }}
-                            className="flex items-center gap-2 font-medium text-blue-600 cursor-pointer hover:text-blue-700 transition-colors duration-150 group w-full min-w-0"
-                          >
-                            <span
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg shadow-sm font-semibold text-sm transition-transform duration-200 group-hover:scale-110 flex-shrink-0"
-                              style={{
-                                background: getColorFromString(
-                                  `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(),
-                                  0.35,
-                                  85
-                                ),
-                                color: getDarkerColorFromString(
-                                  `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(),
-                                  1,
-                                  45
-                                ),
-                              }}
-                              title={`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim()}
-                            >
-                              {getInitials(`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim())}
-                            </span>
-                            <span className="group-hover:underline truncate min-w-0">
-                              {highlightMatch
-                                ? highlightMatch(`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(), search)
-                                : `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim()}
-                            </span>
-                          </a>
-                        ) : col.key === "Tags" ? (
-                          (() => {
-                            const raw = getField(contact, "Tags") ?? "";
-                            if (!raw)
-                              return (
-                                <span className="italic text-gray-400">-</span>
-                              );
-                            const tags = String(raw)
-                              .split(/,|;/)
-                              .map((t) => t.trim())
-                              .filter(Boolean);
-                            if (tags.length === 0)
-                              return (
-                                <span className="italic text-gray-400">-</span>
-                              );
-                            // Popover state
-
-                            return (
-                              <div className="flex items-center gap-1 relative">
-                                <span
-                                  className="px-5 py-2.5 rounded-full text-xs font-semibold"
-                                  style={{
-                                    background: getColorFromString(
-                                      tags[0],
-                                      0.18,
-                                      55
-                                    ),
-                                    color: getDarkerColorFromString(tags[0], 1, 30),
-                                  }}
-                                  title={tags[0]}
-                                >
-                                  {tags[0]}
-                                </span>
-                                {tags.length > 1 && (
-                                  <button
-                                    type="button"
-                                    className="ml-1 px-2 py-1 rounded-full bg-gray-200 text-xs font-semibold hover:bg-gray-300"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTagsIndex(prev => prev === index ? null : index);
-                                    }}
-                                  >
-                                    +{tags.length - 1}
-                                  </button>
-                                )}
-                                {tags.length > 1 && activeTagsIndex === index && (
-                                  <div
-                                    ref={popoverRef}
-                                    className="absolute z-50 left-0 top-full mt-2 bg-white border rounded-lg shadow-lg p-2 flex flex-wrap gap-1"
-                                    style={{ minWidth: "120px" }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {tags.map((t, i) => (
-                                      <span
-                                        key={t + i}
-                                        className="px-3 py-1 rounded-full text-xs font-semibold border"
-                                        style={{
-                                          background: getColorFromString(
-                                            t,
-                                            0.18,
-                                            55
-                                          ),
-                                          color: getDarkerColorFromString(t, 1, 30),
-                                        }}
-                                        title={t}
-                                      >
-                                        {t}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()
-                        ) : col.key === "AccountId" ? (
-                          (() => {
-                            const accId = getField(contact, "AccountId") ?? getField(contact, "accountId");
-                            const cacheVal = accId != null ? accountNameCache[String(accId)] : undefined;
-                            let display;
-                            if (accId == null) {
-                              display = "-";
-                            } else if (typeof cacheVal === "string" && cacheVal) {
-                              display = cacheVal;
-                            } else if (cacheVal === null) {
-                              // fetch attempted but no name found
-                              display = "Account not found";
-                            } else {
-                              // not yet fetched; try a quick lookup in accountsList as fallback
-                              const acct = accountsList.find(
-                                (a) => String(a.AccountId ?? a.accountId ?? a.Id ?? a.id) === String(accId)
-                              );
-                              if (acct && (acct.Name || acct.name)) display = acct.Name ?? acct.name;
-                              else display = "Loading...";
-                            }
-                            return (
-                              <span className={col.key === "score" ? "font-semibold text-gray-900" : ""}>
-                                {highlightMatch && typeof display === "string"
-                                  ? highlightMatch(display, search)
-                                  : display}
-                              </span>
-                            );
-                          })()
-                        ) : (
-                          <span
-                            className={col.key === "score" ? "font-semibold text-gray-900" : ""}
-                          >
-                            {highlightMatch && typeof getField(contact, col.key) === "string"
-                              ? highlightMatch(
-                                dateFields.has(col.key)
-                                  ? formatDateOnly(getField(contact, col.key))
-                                  : getField(contact, col.key),
-                                search
-                              )
-                              : dateFields.has(col.key)
-                                ? formatDateOnly(getField(contact, col.key))
-                                : getField(contact, col.key)}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Modern SaaS-Style Pagination - Centered */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4">
-            {/* Left: Showing X-Y of Z */}
-            <div className="text-sm text-gray-600 min-w-[150px]">
-              <span className="font-medium">{Math.min(startIndex + 1, totalItems)}</span>-<span className="font-medium">{Math.min(endIndex, totalItems)}</span> of <span className="font-medium">{totalItems}</span>
-            </div>
-
-
-            {/* Center: Pagination Controls */}
-            <div className="flex items-center justify-center gap-1 sm:gap-2">
-              {/* First/Prev - hidden on mobile */}
-              <button
-                onClick={() => goToPage(1)}
-                disabled={currentPage === 1 || paginationLoading}
-                title="First page"
-                className="hidden sm:flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"/></svg>
-              </button>
-
-              <button
-                onClick={prevPage}
-                disabled={currentPage === 1 || paginationLoading}
-                title="Previous page"
-                className="flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-              </button>
-
-              {/* Mobile: just "Page X of Y" */}
-              <span className="sm:hidden px-3 py-1.5 rounded-lg bg-blue-200 text-black text-sm font-medium min-w-[80px] text-center">
-                {currentPage} / {totalPages}
-              </span>
-
-              {/* Desktop: full page number list */}
-              <div className="hidden sm:flex items-center gap-1">
-                {(() => {
-                  const maxVisible = 5;
-                  const pages = [];
-                  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-                  if (endPage - startPage < maxVisible - 1) {
-                    startPage = Math.max(1, endPage - maxVisible + 1);
-                  }
-                  if (startPage > 1) {
-                    pages.push(
-                      <button key={1} onClick={() => goToPage(1)} disabled={paginationLoading}
-                        className="px-3 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 transition-all duration-200">1</button>
-                    );
-                    if (startPage > 2) pages.push(<span key="ellipsis-start" className="text-gray-400 px-2 font-medium">...</span>);
-                  }
-                  for (let i = startPage; i <= endPage; i++) {
-                    pages.push(
-                      <button key={i} onClick={() => goToPage(i)} disabled={paginationLoading}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${i === currentPage ? 'bg-blue-200 text-black shadow-sm' : 'bg-transparent text-gray-700 hover:bg-blue-100'
-                          }`}>{i}</button>
-                    );
-                  }
-                  if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) pages.push(<span key="ellipsis-end" className="text-gray-400 px-2 font-medium">...</span>);
-                    pages.push(
-                      <button key={totalPages} onClick={() => goToPage(totalPages)} disabled={paginationLoading}
-                        className="px-3 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 transition-all duration-200">{totalPages}</button>
-                    );
-                  }
-                  return pages;
-                })()}
-              </div>
-
-              <button
-                onClick={nextPage}
-                disabled={currentPage >= totalPages || paginationLoading}
-                title="Next page"
-                className="flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-              </button>
-
-              <button
-                onClick={() => goToPage(totalPages)}
-                disabled={currentPage >= totalPages || paginationLoading}
-                title="Last page"
-                className="hidden sm:flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 4.5l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"/></svg>
-              </button>
-            </div>
-
-            {/* Right: Empty Space / Optional Loading Indicator */}
-            <div className="min-w-[150px] flex justify-end">
-              {paginationLoading && (
-                <span className="text-xs sm:text-sm text-blue-600 font-medium">Loading...</span>
+                  <FiTrash2 className="inline mr-1" /> Delete
+                </button>
               )}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Edit Form */}
-      {isEditing && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl transform animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 bg-white">
-              <h4 className="text-xl font-semibold text-gray-900">Edit Contact</h4>
-              <button
-                onClick={() => setIsEditing(false)}
-                aria-label="Close"
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1.5 transition-colors duration-150"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        )}
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+            <div className="bg-white w-full sm:w-96 rounded-2xl shadow-2xl p-6 transform animate-in zoom-in-95 duration-200">
+              <div className="mb-6 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Confirm Delete</h4>
+                <p className="text-sm sm:text-base text-gray-600">Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteContactName || `${deleteCount} contact${deleteCount > 1 ? 's' : ''}`}</span>?</p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button type="button" onClick={() => setShowDeleteModal(false)}
+                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                  Cancel
+                </button>
+                <button type="button" onClick={confirmDelete}
+                  className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md focus:ring-2 focus:ring-red-500 focus:outline-none">
+                  Delete
+                </button>
+              </div>
             </div>
-            <form className="p-6 space-y-6" onSubmit={submitEdit}>
-              {/* Core Identity */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Core Identity</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-xs">First Name</label>
-                    <input type="text" value={editForm.FirstName || ""} onChange={(e) => setEditForm({ ...editForm, FirstName: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-xs">Last Name</label>
-                    <input type="text" value={editForm.LastName || ""} onChange={(e) => setEditForm({ ...editForm, LastName: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Job Title</label>
-                    <input type="text" value={editForm.JobTitle || ""} onChange={(e) => setEditForm({ ...editForm, JobTitle: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
+          </div>
+        )}
+
+        {/* Business Card Modal */}
+        {showBusinessCard && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+            <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-4 sm:p-5 transform animate-in zoom-in-95 duration-200 max-h-[86vh] overflow-hidden">
+              <div className="flex items-center justify-between gap-3 border-b border-gray-200 pb-3 mb-4">
+                <div>
+                  <h4 className="text-base font-semibold text-gray-900">Business Card</h4>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {selectedContactDetails?.FirstName || selectedContactDetails?.firstName || ''} {selectedContactDetails?.LastName || selectedContactDetails?.lastName || ''}
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowBusinessCard(false)}
+                  className="inline-flex items-center justify-center rounded-full p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-150"
+                  aria-label="Close business card modal"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              {/* Contact Information */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Contact Information</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Work Email</label>
-                    <input type="email" value={editForm.WorkEmail || ""} onChange={(e) => setEditForm({ ...editForm, WorkEmail: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Work Phone</label>
-                    <input type="tel" value={editForm.WorkPhone || ""} onChange={(e) => setEditForm({ ...editForm, WorkPhone: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Mobile</label>
-                    <input type="tel" value={editForm.Mobile || ""} onChange={(e) => setEditForm({ ...editForm, Mobile: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">LinkedIn</label>
-                    <input type="text" value={editForm.LinkedIn || ""} onChange={(e) => setEditForm({ ...editForm, LinkedIn: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Facebook</label>
-                    <input type="text" value={editForm.Facebook || ""} onChange={(e) => setEditForm({ ...editForm, Facebook: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Twitter</label>
-                    <input type="text" value={editForm.Twitter || ""} onChange={(e) => setEditForm({ ...editForm, Twitter: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
+              {businessCardLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
                 </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3 text-sm text-gray-700">
+                    <div>Scroll to zoom, double-click to reset</div>
+                    {businessCardImages.back && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setBusinessCardSide('front')}
+                          className={`px-3 py-2 rounded-lg transition-colors duration-150 ${businessCardSide === 'front' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                          Front
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBusinessCardSide('back')}
+                          className={`px-3 py-2 rounded-lg transition-colors duration-150 ${businessCardSide === 'back' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                          Back
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-3xl border border-gray-200 bg-gray-50 overflow-hidden shadow-sm">
+                    <div className="text-sm font-medium text-gray-900 px-4 py-3 border-b border-gray-200 bg-white">
+                      {businessCardSide === 'front' ? 'Front' : 'Back'}
+                    </div>
+                    <div
+                      className="relative overflow-auto bg-black/5 cursor-zoom-in"
+                      style={{ minHeight: '40vh', maxHeight: '56vh' }}
+                      onWheel={handleBusinessCardWheel}
+                      onDoubleClick={() => setBusinessCardZoom(1)}
+                    >
+                      {businessCardImages[businessCardSide] ? (
+                        <div className="flex items-center justify-center p-4">
+                          <img
+                            src={businessCardImages[businessCardSide]}
+                            alt={`Business Card ${businessCardSide}`}
+                            className="max-w-full max-h-[48vh] object-contain"
+                            style={{
+                              transform: `scale(${businessCardZoom})`,
+                              transformOrigin: 'center',
+                              transition: 'transform 0.15s ease-in-out',
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-[40vh] text-gray-500 text-sm">
+                          No {businessCardSide} image available.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {/* Contacts Table with Sticky Pagination */}
+        <div className="w-full flex-1 min-h-0 flex flex-col rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+          {/* Sticky Search Bar */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-end gap-3">
+            {localSearch && (
+              <span className="text-xs text-gray-500 whitespace-nowrap">
+                Results for "<span className="font-medium text-gray-700">{localSearch}</span>"
+              </span>
+            )}
+            <SearchBar
+              value={localSearch}
+              onChange={setLocalSearch}
+              placeholder="Search contacts..."
+              className="max-w-xs"
+            />
+          </div>
+          {/* Table Container - Scrollable with fixed height */}
+          <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-auto relative visible-scrollbar">
+            <table className="min-w-max w-full border-collapse">
+              <thead className="sticky top-0 z-30 bg-white shadow-sm" style={{ position: 'sticky', top: 0 }}>
+                <tr>
+                  {/* Select All Checkbox - Touch friendly */}
+                  <th className="sticky left-0 z-40 min-w-10 sm:min-w-12 w-10 sm:w-12 px-2 sm:px-3 py-3 text-center bg-gray-50">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all"
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someSelected;
+                      }}
+                      onChange={toggleAll}
+                      className="w-3 h-3 sm:w-4 sm:h-4 rounded border-gray-300 text-blue-600 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </th>
+                  {/* Column Headers with Sorting */}
+                  {columns.map((col) => (
+                    <th
+                      key={col.key}
+                      className={`px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 select-none cursor-pointer hover:bg-gray-100 transition-colors duration-150 whitespace-nowrap ${col.key === "Name"
+                        ? "sticky left-10 sm:left-12 z-30 min-w-40 bg-gray-50"
+                        : "hidden sm:table-cell min-w-20 sm:min-w-32"
+                        }`}
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{col.label}</span>
+                        {sortConfig.key === col.key && (
+                          <span className="text-blue-600 flex-shrink-0">
+                            {sortConfig.direction === "asc" ? "↑" : "↓"}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              {/* Table body */}
+              <tbody className="divide-y divide-gray-100">
+                {paginatedData.map((contact, index) => (
+                  <tr
+                    key={getField(contact, "ContactId") ?? getField(contact, "FirstName") + getField(contact, "LastName") ?? index}
+                    className={`transition-all duration-150 hover:bg-gray-50 ${selected.has(index) ? "bg-blue-50" : "bg-white"
+                      }`}
+                  >
+                    {/* Row Selection Checkbox */}
+                    <td
+                      className="sticky left-0 bg-inherit text-center min-w-10 sm:min-w-12 w-10 sm:w-12 px-2 sm:px-3 py-3 flex items-center justify-center"
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Select row ${index + 1}`}
+                        checked={selected.has(index)}
+                        onChange={() => toggleRow(index)}
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded border-gray-300 text-blue-600 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Data cells */}
+                    {columns.map((col, colIdx) => {
+                      let tooltipContent = "";
+                      if (col.key === "FirstName" || col.key === "LastName") {
+                        tooltipContent = getField(contact, col.key) || "";
+                      } else if (col.key === "AccountId") {
+                        const accId = getField(contact, "AccountId");
+                        if (!accId) {
+                          tooltipContent = "No account";
+                        } else {
+                          const acct = accountsList.find((a) => String(a.AccountId ?? a.accountId ?? a.Id ?? a.id) === String(accId));
+                          tooltipContent = (acct && (acct.Name || acct.name)) ? (acct.Name ?? acct.name) : "Loading...";
+                        }
+                      } else if (col.key === "Tags") {
+                        const raw = getField(contact, "Tags") ?? "";
+                        tooltipContent = raw ? String(raw).split(/,|;/).map((t) => t.trim()).filter(Boolean).join(", ") : "-";
+                      } else {
+                        const raw = getField(contact, col.key);
+                        tooltipContent = dateFields.has(col.key) ? formatDateOnly(raw) : String(raw || "");
+                      }
+                      return (
+                        <td
+                          key={col.key}
+                          className={`px-4 py-3 text-left text-xs sm:text-sm text-gray-700 ${col.key === "Name"
+                            ? "sticky left-10 sm:left-12 min-w-40 bg-white max-w-xs overflow-hidden"
+                            : "hidden sm:table-cell bg-inherit max-w-xs truncate overflow-hidden"
+                            }`}
+                          title={tooltipContent}
+                        >
+                          {col.key === "Name" ? (
+                            <a
+                              href={`/dashboard/contacts?id=${getField(contact, "ContactId")}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleShowContactDetails(getField(contact, "ContactId"));
+                              }}
+                              className="flex items-center gap-2 font-medium text-blue-600 cursor-pointer hover:text-blue-700 transition-colors duration-150 group w-full min-w-0"
+                            >
+                              <span
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg shadow-sm font-semibold text-sm transition-transform duration-200 group-hover:scale-110 flex-shrink-0"
+                                style={{
+                                  background: getColorFromString(
+                                    `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(),
+                                    0.35,
+                                    85
+                                  ),
+                                  color: getDarkerColorFromString(
+                                    `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(),
+                                    1,
+                                    45
+                                  ),
+                                }}
+                                title={`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim()}
+                              >
+                                {getInitials(`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim())}
+                              </span>
+                              <span className="group-hover:underline truncate min-w-0">
+                                {highlightMatch
+                                  ? highlightMatch(`${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim(), search)
+                                  : `${getField(contact, "FirstName") || ''} ${getField(contact, "LastName") || ''}`.trim()}
+                              </span>
+                            </a>
+                          ) : col.key === "Tags" ? (
+                            (() => {
+                              const raw = getField(contact, "Tags") ?? "";
+                              if (!raw)
+                                return (
+                                  <span className="italic text-gray-400">-</span>
+                                );
+                              const tags = String(raw)
+                                .split(/,|;/)
+                                .map((t) => t.trim())
+                                .filter(Boolean);
+                              if (tags.length === 0)
+                                return (
+                                  <span className="italic text-gray-400">-</span>
+                                );
+                              // Popover state
+
+                              return (
+                                <div className="flex items-center gap-1 relative">
+                                  <span
+                                    className="px-5 py-2.5 rounded-full text-xs font-semibold"
+                                    style={{
+                                      background: getColorFromString(
+                                        tags[0],
+                                        0.18,
+                                        55
+                                      ),
+                                      color: getDarkerColorFromString(tags[0], 1, 30),
+                                    }}
+                                    title={tags[0]}
+                                  >
+                                    {tags[0]}
+                                  </span>
+                                  {tags.length > 1 && (
+                                    <button
+                                      type="button"
+                                      className="ml-1 px-2 py-1 rounded-full bg-gray-200 text-xs font-semibold hover:bg-gray-300"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveTagsIndex(prev => prev === index ? null : index);
+                                      }}
+                                    >
+                                      +{tags.length - 1}
+                                    </button>
+                                  )}
+                                  {tags.length > 1 && activeTagsIndex === index && (
+                                    <div
+                                      ref={popoverRef}
+                                      className="absolute z-50 left-0 top-full mt-2 bg-white border rounded-lg shadow-lg p-2 flex flex-wrap gap-1"
+                                      style={{ minWidth: "120px" }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {tags.map((t, i) => (
+                                        <span
+                                          key={t + i}
+                                          className="px-3 py-1 rounded-full text-xs font-semibold border"
+                                          style={{
+                                            background: getColorFromString(
+                                              t,
+                                              0.18,
+                                              55
+                                            ),
+                                            color: getDarkerColorFromString(t, 1, 30),
+                                          }}
+                                          title={t}
+                                        >
+                                          {t}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()
+                          ) : col.key === "AccountId" ? (
+                            (() => {
+                              const accId = getField(contact, "AccountId") ?? getField(contact, "accountId");
+                              const cacheVal = accId != null ? accountNameCache[String(accId)] : undefined;
+                              let display;
+                              if (accId == null) {
+                                display = "-";
+                              } else if (typeof cacheVal === "string" && cacheVal) {
+                                display = cacheVal;
+                              } else if (cacheVal === null) {
+                                // fetch attempted but no name found
+                                display = "Account not found";
+                              } else {
+                                // not yet fetched; try a quick lookup in accountsList as fallback
+                                const acct = accountsList.find(
+                                  (a) => String(a.AccountId ?? a.accountId ?? a.Id ?? a.id) === String(accId)
+                                );
+                                if (acct && (acct.Name || acct.name)) display = acct.Name ?? acct.name;
+                                else display = "Loading...";
+                              }
+                              return (
+                                <span className={col.key === "score" ? "font-semibold text-gray-900" : ""}>
+                                  {highlightMatch && typeof display === "string"
+                                    ? highlightMatch(display, search)
+                                    : display}
+                                </span>
+                              );
+                            })()
+                          ) : (
+                            <span
+                              className={col.key === "score" ? "font-semibold text-gray-900" : ""}
+                            >
+                              {highlightMatch && typeof getField(contact, col.key) === "string"
+                                ? highlightMatch(
+                                  dateFields.has(col.key)
+                                    ? formatDateOnly(getField(contact, col.key))
+                                    : getField(contact, col.key),
+                                  search
+                                )
+                                : dateFields.has(col.key)
+                                  ? formatDateOnly(getField(contact, col.key))
+                                  : getField(contact, col.key)}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Modern SaaS-Style Pagination - Centered */}
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+              {/* Left: Showing X-Y of Z */}
+              <div className="text-sm text-gray-600 min-w-[150px]">
+                <span className="font-medium">{Math.min(startIndex + 1, totalItems)}</span>-<span className="font-medium">{Math.min(endIndex, totalItems)}</span> of <span className="font-medium">{totalItems}</span>
               </div>
 
-              {/* Location */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Location</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2 flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Address</label>
-                    <textarea value={editForm.Address || ""} onChange={(e) => setEditForm({ ...editForm, Address: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" rows="2" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Country</label>
-                    <input type="text" value={editForm.Country || ""} onChange={(e) => setEditForm({ ...editForm, Country: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">State</label>
-                    <input type="text" value={editForm.State || ""} onChange={(e) => setEditForm({ ...editForm, State: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">City</label>
-                    <input type="text" value={editForm.City || ""} onChange={(e) => setEditForm({ ...editForm, City: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Zipcode</label>
-                    <input type="text" value={editForm.Zipcode || ""} onChange={(e) => setEditForm({ ...editForm, Zipcode: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Time Zone</label>
-                    <input type="text" value={editForm.TimeZone || ""} onChange={(e) => setEditForm({ ...editForm, TimeZone: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
+
+              {/* Center: Pagination Controls */}
+              <div className="flex items-center justify-center gap-1 sm:gap-2">
+                {/* First/Prev - hidden on mobile */}
+                <button
+                  onClick={() => goToPage(1)}
+                  disabled={currentPage === 1 || paginationLoading}
+                  title="First page"
+                  className="hidden sm:flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" /></svg>
+                </button>
+
+                <button
+                  onClick={prevPage}
+                  disabled={currentPage === 1 || paginationLoading}
+                  title="Previous page"
+                  className="flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                </button>
+
+                {/* Mobile: just "Page X of Y" */}
+                <span className="sm:hidden px-3 py-1.5 rounded-lg bg-blue-200 text-black text-sm font-medium min-w-[80px] text-center">
+                  {currentPage} / {totalPages}
+                </span>
+
+                {/* Desktop: full page number list */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {(() => {
+                    const maxVisible = 5;
+                    const pages = [];
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                    if (endPage - startPage < maxVisible - 1) {
+                      startPage = Math.max(1, endPage - maxVisible + 1);
+                    }
+                    if (startPage > 1) {
+                      pages.push(
+                        <button key={1} onClick={() => goToPage(1)} disabled={paginationLoading}
+                          className="px-3 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 transition-all duration-200">1</button>
+                      );
+                      if (startPage > 2) pages.push(<span key="ellipsis-start" className="text-gray-400 px-2 font-medium">...</span>);
+                    }
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button key={i} onClick={() => goToPage(i)} disabled={paginationLoading}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${i === currentPage ? 'bg-blue-200 text-black shadow-sm' : 'bg-transparent text-gray-700 hover:bg-blue-100'
+                            }`}>{i}</button>
+                      );
+                    }
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) pages.push(<span key="ellipsis-end" className="text-gray-400 px-2 font-medium">...</span>);
+                      pages.push(
+                        <button key={totalPages} onClick={() => goToPage(totalPages)} disabled={paginationLoading}
+                          className="px-3 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 transition-all duration-200">{totalPages}</button>
+                      );
+                    }
+                    return pages;
+                  })()}
                 </div>
+
+                <button
+                  onClick={nextPage}
+                  disabled={currentPage >= totalPages || paginationLoading}
+                  title="Next page"
+                  className="flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                </button>
+
+                <button
+                  onClick={() => goToPage(totalPages)}
+                  disabled={currentPage >= totalPages || paginationLoading}
+                  title="Last page"
+                  className="hidden sm:flex items-center px-2 py-1.5 rounded-lg bg-transparent text-gray-700 text-sm font-medium hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 4.5l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5" /></svg>
+                </button>
               </div>
 
-              {/* Business Association */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Business Association</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* âŒ REMOVED: Account ID - Internal ID should not be editable
+              {/* Right: Empty Space / Optional Loading Indicator */}
+              <div className="min-w-[150px] flex justify-end">
+                {paginationLoading && (
+                  <span className="text-xs sm:text-sm text-blue-600 font-medium">Loading...</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Edit Form */}
+        {isEditing && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl transform animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+                <h4 className="text-xl font-semibold text-gray-900">Edit Contact</h4>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  aria-label="Close"
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1.5 transition-colors duration-150"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form className="p-6 space-y-6" onSubmit={submitEdit}>
+                {/* Core Identity */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Core Identity</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-xs">First Name</label>
+                      <input type="text" value={editForm.FirstName || ""} onChange={(e) => setEditForm({ ...editForm, FirstName: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-xs">Last Name</label>
+                      <input type="text" value={editForm.LastName || ""} onChange={(e) => setEditForm({ ...editForm, LastName: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Job Title</label>
+                      <input type="text" value={editForm.JobTitle || ""} onChange={(e) => setEditForm({ ...editForm, JobTitle: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    {/* <div className="flex flex-col gap-1.5">
+                    <label className="font-medium text-gray-700 text-sm">Enquiry No</label>
+                    <input type="text" value={editForm.EnquiryNo || ""} onChange={(e) => setEditForm({ ...editForm, EnquiryNo: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                  </div> */}
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Contact Information</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Work Email</label>
+                      <input type="email" value={editForm.WorkEmail || ""} onChange={(e) => setEditForm({ ...editForm, WorkEmail: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Work Phone</label>
+                      <input type="tel" value={editForm.WorkPhone || ""} onChange={(e) => setEditForm({ ...editForm, WorkPhone: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Mobile</label>
+                      <input type="tel" value={editForm.Mobile || ""} onChange={(e) => setEditForm({ ...editForm, Mobile: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">LinkedIn</label>
+                      <input type="text" value={editForm.LinkedIn || ""} onChange={(e) => setEditForm({ ...editForm, LinkedIn: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Facebook</label>
+                      <input type="text" value={editForm.Facebook || ""} onChange={(e) => setEditForm({ ...editForm, Facebook: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Twitter</label>
+                      <input type="text" value={editForm.Twitter || ""} onChange={(e) => setEditForm({ ...editForm, Twitter: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Location</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2 flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Address</label>
+                      <textarea value={editForm.Address || ""} onChange={(e) => setEditForm({ ...editForm, Address: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" rows="2" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Country</label>
+                      <input type="text" value={editForm.Country || ""} onChange={(e) => setEditForm({ ...editForm, Country: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">State</label>
+                      <input type="text" value={editForm.State || ""} onChange={(e) => setEditForm({ ...editForm, State: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">City</label>
+                      <input type="text" value={editForm.City || ""} onChange={(e) => setEditForm({ ...editForm, City: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Zipcode</label>
+                      <input type="text" value={editForm.Zipcode || ""} onChange={(e) => setEditForm({ ...editForm, Zipcode: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Time Zone</label>
+                      <input type="text" value={editForm.TimeZone || ""} onChange={(e) => setEditForm({ ...editForm, TimeZone: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Business Association */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Business Association</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* âŒ REMOVED: Account ID - Internal ID should not be editable
                   <div className="flex flex-col gap-1.5">
                     <label className="font-medium text-gray-700 text-sm">Account ID</label>
                     <input type="number" value={editForm.AccountId || ""} onChange={(e) => setEditForm({...editForm, AccountId: e.target.value})} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
                   </div>
                   */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Account</label>
-                    <input type="text" value={editForm.Account || ""} onChange={(e) => setEditForm({ ...editForm, Account: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  {/* âŒ REMOVED: Sales Owner ID - Internal ID should not be editable
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Account</label>
+                      <input type="text" value={editForm.Account || ""} onChange={(e) => setEditForm({ ...editForm, Account: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    {/* âŒ REMOVED: Sales Owner ID - Internal ID should not be editable
                   <div className="flex flex-col gap-1.5">
                     <label className="font-medium text-gray-700 text-sm">Sales Owner ID</label>
                     <input type="number" value={editForm.SalesOwnerId || ""} onChange={(e) => setEditForm({...editForm, SalesOwnerId: e.target.value})} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
                   </div>
                   */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Sales Owner</label>
-                    <input type="text" value={editForm.SalesOwner || ""} onChange={(e) => setEditForm({ ...editForm, SalesOwner: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Sales Owner</label>
+                      <input type="text" value={editForm.SalesOwner || ""} onChange={(e) => setEditForm({ ...editForm, SalesOwner: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Classification */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Classification & Marketing</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Status</label>
-                    <input type="text" value={editForm.Status || ""} onChange={(e) => setEditForm({ ...editForm, Status: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Life Cycle Stage</label>
-                    <input type="text" value={editForm.LifeCycleStage || ""} onChange={(e) => setEditForm({ ...editForm, LifeCycleStage: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Territory</label>
-                    <input type="text" value={editForm.Territory || ""} onChange={(e) => setEditForm({ ...editForm, Territory: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Source</label>
-                    <input type="text" value={editForm.Source || ""} onChange={(e) => setEditForm({ ...editForm, Source: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Campaign</label>
-                    <input type="text" value={editForm.Campaign || ""} onChange={(e) => setEditForm({ ...editForm, Campaign: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Customer Fit</label>
-                    <input type="text" value={editForm.CustomerFit || ""} onChange={(e) => setEditForm({ ...editForm, CustomerFit: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Score</label>
-                    <input type="number" value={editForm.Score || ""} onChange={(e) => setEditForm({ ...editForm, Score: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Subscription Status</label>
-                    <input type="text" value={editForm.SubscriptionStatus || ""} onChange={(e) => setEditForm({ ...editForm, SubscriptionStatus: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="sm:col-span-2 flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Tags</label>
-                    <input type="text" value={editForm.Tags || ""} onChange={(e) => setEditForm({ ...editForm, Tags: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                {/* Classification */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Classification & Marketing</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Status</label>
+                      <input type="text" value={editForm.Status || ""} onChange={(e) => setEditForm({ ...editForm, Status: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Life Cycle Stage</label>
+                      <input type="text" value={editForm.LifeCycleStage || ""} onChange={(e) => setEditForm({ ...editForm, LifeCycleStage: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Territory</label>
+                      <input type="text" value={editForm.Territory || ""} onChange={(e) => setEditForm({ ...editForm, Territory: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Source</label>
+                      <input type="text" value={editForm.Source || ""} onChange={(e) => setEditForm({ ...editForm, Source: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Campaign</label>
+                      <input type="text" value={editForm.Campaign || ""} onChange={(e) => setEditForm({ ...editForm, Campaign: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Customer Fit</label>
+                      <input type="text" value={editForm.CustomerFit || ""} onChange={(e) => setEditForm({ ...editForm, CustomerFit: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Score</label>
+                      <input type="number" value={editForm.Score || ""} onChange={(e) => setEditForm({ ...editForm, Score: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Subscription Status</label>
+                      <input type="text" value={editForm.SubscriptionStatus || ""} onChange={(e) => setEditForm({ ...editForm, SubscriptionStatus: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Tags</label>
+                      <input type="text" value={editForm.Tags || ""} onChange={(e) => setEditForm({ ...editForm, Tags: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Activity */}
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Activity</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Last Activity Type</label>
-                    <input type="text" value={editForm.LastActivityType || ""} onChange={(e) => setEditForm({ ...editForm, LastActivityType: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  {/* âŒ REMOVED: Last Activity Date - System-managed date should not be editable
+                {/* Activity */}
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-4">Activity</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Last Activity Type</label>
+                      <input type="text" value={editForm.LastActivityType || ""} onChange={(e) => setEditForm({ ...editForm, LastActivityType: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    {/* âŒ REMOVED: Last Activity Date - System-managed date should not be editable
                   <div className="flex flex-col gap-1.5">
                     <label className="font-medium text-gray-700 text-sm">Last Activity Date</label>
                     <input type="date" value={editForm.LastActivityDate || ""} onChange={(e) => setEditForm({...editForm, LastActivityDate: e.target.value})} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
                   </div>
                   */}
-                  {/* âŒ REMOVED: Last Contacted Time - System-managed date should not be editable
+                    {/* âŒ REMOVED: Last Contacted Time - System-managed date should not be editable
                   <div className="flex flex-col gap-1.5">
                     <label className="font-medium text-gray-700 text-sm">Last Contacted Time</label>
                     <input type="datetime-local" value={editForm.LastContactedTime || ""} onChange={(e) => setEditForm({...editForm, LastContactedTime: e.target.value})} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
                   </div>
                   */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Last Contacted Mode</label>
-                    <input type="text" value={editForm.LastContactedMode || ""} onChange={(e) => setEditForm({ ...editForm, LastContactedMode: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className="sm:col-span-2 flex flex-col gap-1.5">
-                    <label className="font-medium text-gray-700 text-sm">Recent Note</label>
-                    <textarea value={editForm.RecentNote || ""} onChange={(e) => setEditForm({ ...editForm, RecentNote: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" rows="2" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Last Contacted Mode</label>
+                      <input type="text" value={editForm.LastContactedMode || ""} onChange={(e) => setEditForm({ ...editForm, LastContactedMode: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-1.5">
+                      <label className="font-medium text-gray-700 text-sm">Recent Note</label>
+                      <textarea value={editForm.RecentNote || ""} onChange={(e) => setEditForm({ ...editForm, RecentNote: e.target.value })} className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" rows="2" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-all"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm shadow-sm hover:shadow-md transition-all"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-all"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm shadow-sm hover:shadow-md transition-all"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
       {/* Contact Details Slide-in Popup */}
       {(detailsLoading || detailsError || selectedContactDetails) && (
@@ -1812,6 +1818,17 @@ function Contacts({
             {/* Secondary header row for actions */}
             {selectedContactDetails && (
               <div className="flex items-center gap-4 px-3 py-2 border-b border-b-gray-200 bg-white">
+
+                <div className="text-sm font-semibold text-gray-700">
+                  Enquiry No:
+                  <span className="ml-1 text-blue-600">
+                    {selectedContactDetails?.EnquiryNo ||
+                      selectedContactDetails?.enquiryNo ||
+                      "-"}
+                  </span>
+                </div>
+
+
                 <div className="flex-1" />
                 <button
                   className={`flex items-center justify-center sm:justify-start gap-2 px-2 sm:px-5 py-2 rounded-md text-sm transition-all duration-200 w-full sm:w-auto
@@ -1960,7 +1977,7 @@ function Contacts({
                     }
                     accountId={
                       selectedContactDetails.AccountId ||
-                      selectedContactDetails.accountId 
+                      selectedContactDetails.accountId
                     }
                     contactId={
                       selectedContactDetails.ContactId ||
@@ -2098,6 +2115,7 @@ function Contacts({
                             ["FirstName", "First Name"],
                             ["LastName", "Last Name"],
                             ["JobTitle", "Job Title"],
+                            //["EnquiryNo", "Enquiry No"],
                             ["WorkEmail", "Work Email"],
                             ["WorkPhone", "Work Phone"],
                             ["Mobile", "Mobile"],

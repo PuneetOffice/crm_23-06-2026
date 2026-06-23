@@ -197,6 +197,7 @@ function Dashboard() {
     { key: "Account", label: "Account" },
     { key: "JobTitle", label: "Job Title" },
     { key: "Account", label: "Account" },
+    {key: "EnquiryNo", label: "Enquiry Number"},
     { key: "WorkEmail", label: "Work Email" },
     { key: "WorkPhone", label: "Work Phone" },
     { key: "Mobile", label: "Mobile" },

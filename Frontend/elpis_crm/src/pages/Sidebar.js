@@ -12,25 +12,6 @@ const FiMenu = ({ size = 24 }) => (
     <line x1="3" y1="18" x2="21" y2="18"/>
   </svg>
 );
-const FiX = ({ size = 24 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6"  x2="6"  y2="18"/>
-    <line x1="6"  y1="6"  x2="18" y2="18"/>
-  </svg>
-);
-const FiChevronLeft = ({ size = 19 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6"/>
-  </svg>
-);
-const FiChevronRight = ({ size = 19 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6"/>
-  </svg>
-);
 
 /* ── Custom branded SVG icons ───────────────────────────────── */
 const HomeIcon = ({ size = 16, className = "" }) => (
@@ -165,12 +146,12 @@ function Sidebar({ activeContent, openOrActivateTab, setShowPanel }) {
 
       {/* Mobile Hamburger Button - visible only on mobile */}
       <button
-  onClick={() => setSidebarOpen(!sidebarOpen)}
-  className="lg:hidden fixed left-2 top-2 z-50 bg-transparent text-gray-600 hover:text-gray-900 text-xl font-bold"
-  aria-label="Toggle navigation menu"
->
-  {sidebarOpen ? "❮" : "☰"}
-</button>
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed left-1/2 bottom-4 z-[120] -translate-x-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700"
+        aria-label="Toggle navigation menu"
+      >
+        <FiMenu size={26} />
+      </button>
 
       {/* Mobile Sidebar Overlay - visible only on mobile */}
       {sidebarOpen && (
@@ -188,13 +169,13 @@ function Sidebar({ activeContent, openOrActivateTab, setShowPanel }) {
           border-r border-slate-200
           z-[100] lg:z-10
           transform transition-all duration-300 ease-in-out
-          overflow-y-auto
+          flex flex-col
           ${sidebarOpen ? "translate-x-0 w-44" : "-translate-x-full lg:translate-x-0"}
           ${sidebarCollapsed ? "lg:w-16" : "lg:w-44"}
         `}
       >
-        {/* Sidebar Header with Desktop Collapse Button */}
-        <div className="px-4 py-5 border-b border-slate-200 flex items-center justify-between">
+        {/* Sidebar Header */}
+        <div className="h-[70px] px-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
           <div className={`flex items-center gap-3 ${sidebarCollapsed ? "lg:justify-center lg:w-full" : ""}`}>
             <img
               src={WindowLogo}
@@ -205,19 +186,10 @@ function Sidebar({ activeContent, openOrActivateTab, setShowPanel }) {
               // <h2 className="text-sm font-semibold text-slate-900 hidden lg:block">ELPIS</h2>
             )} */}
           </div>
-
-          {/* Desktop Collapse Button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-500 hover:text-slate-700"
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {sidebarCollapsed ? <FiChevronRight size={19} /> : <FiChevronLeft size={19} />}
-          </button>
         </div>
 
         {/* Navigation Items */}
-        <div className="p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeContent === item.id;
@@ -253,6 +225,15 @@ function Sidebar({ activeContent, openOrActivateTab, setShowPanel }) {
 
         {/* Divider */}
         <div className="mx-3 my-3 border-t border-slate-200" />
+
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="mb-4 hidden items-center justify-center self-center bg-transparent p-0 text-slate-500 hover:text-slate-700 lg:flex"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <FiMenu size={24} />
+        </button>
       </nav>
     </>
   );

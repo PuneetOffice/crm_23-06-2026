@@ -39,8 +39,8 @@ import {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const PIPELINE_STAGES = [
-  "New Lead", "Need Analysis", "Under Review", "Demo",
-  "Proposal/Price Quote", "Hold", "Negotiation/Review", "Follow Up",
+  "New Lead", "Enquiry Analysis", "Under Review", "Demo",
+  "Proposal/Price Quote", "Hold", "Negotiation/Review",
   "PO Received", "Won", "Lost"
 ];
 
@@ -443,10 +443,11 @@ function FilterBar({ filters, onFilterChange, deals, onReset, onExport, canViewA
 
 function StageBadge({ stage }) {
   const map = {
-    'New Lead': 'bg-blue-100 text-blue-700', 'Need Analysis': 'bg-cyan-100 text-cyan-700',
+    'New Lead': 'bg-blue-100 text-blue-700', 'Enquiry Analysis': 'bg-cyan-100 text-cyan-700',
     'Under Review': 'bg-blue-100 text-blue-700', 'Demo': 'bg-purple-100 text-purple-700',
     'Proposal/Price Quote': 'bg-amber-100 text-amber-700', 'Hold': 'bg-stone-100 text-stone-700', 'Negotiation/Review': 'bg-orange-100 text-orange-700',
-    'Follow Up': 'bg-yellow-100 text-yellow-700', 'RO Received': 'bg-f0f8ff text-blue-700',
+    //'Follow Up': 'bg-yellow-100 text-yellow-700', 
+    'RO Received': 'bg-f0f8ff text-blue-700',
     'Won': 'bg-emerald-100 text-emerald-700', 'Lost': 'bg-rose-100 text-rose-700',
   };
   return <span className={`px-3 py-1 text-xs font-bold rounded-full ${map[stage] ?? 'bg-gray-100 text-gray-700'}`}>{stage}</span>;
@@ -2197,13 +2198,13 @@ export default function Home() {
                         {stageData.map((entry, i) => {
                           const stageColorMap = {
                             "New Lead": "#93c5fd",
-                            "Need Analysis": "#93c5fd",
+                            "Enquiry Analysis": "#93c5fd",
                             "Under Review": "#93c5fd",
                             "Demo": "#93c5fd",
                             "Proposal/Price Quote": "#93c5fd",
                             "Hold": "#93c5fd",
                             "Negotiation/Review": "#93c5fd",
-                            "Follow Up": "#93c5fd",
+                            //"Follow Up": "#93c5fd",
                             "PO Received": "#93c5fd",
                             "Won": "#bbf7d0",
                             "Lost": "#fecaca",

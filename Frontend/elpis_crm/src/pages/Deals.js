@@ -8,15 +8,16 @@ import { searchAccounts, searchContactsByAccount } from "../api/entitySearch";
 import SearchBar from "../utils/SearchBar";
 import { fetchExchangeRates, convertCurrency, getCurrencySymbol, cleanCurrencyValue, getINRValueFromDeal, round2 } from "../utils/currency";
 
+
 export const dealStages = [
   "New Lead",
-  "Need Analysis",
+  "Enquiry Analysis",
   "Under Review",
   "Demo",
   "Proposal/Price Quote",
   "Hold",
   "Negotiation/Review",
-  "Follow Up",
+  //"Follow Up",
   "PO Received",
   "Won",
   "Lost",
@@ -58,13 +59,13 @@ export async function fetchDealStageCounts() {
 
 const stageHeaderColors = {
   "New Lead": "#e9f5f9",
-  "Need Analysis": "#f0f0e9",
+  "Enquiry Analysis": "#f0f0e9",
   "Under Review": "#f5e9f5",
   Demo: "#e9f9f2",
   "Proposal/Price Quote": "#f9f2e9",
   "Hold": "#fdf6e3",
   "Negotiation/Review": "#f2e9f9",
-  "Follow Up": "#e9e9f9",
+  //"Follow Up": "#e9e9f9",
   "PO Received": "#f0f8ff",
   Won: "#e0eee8",
   Lost: "#ffe4e1",
@@ -261,6 +262,8 @@ function Deals({
   const [detailsError, setDetailsError] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [enquiryNumbers, setEnquiryNumbers] = useState([]);
+  const [enquiryLoading, setEnquiryLoading] = useState(false);
 
 
   const [accountsList, setAccountsList] = useState([]);
@@ -775,6 +778,42 @@ function Deals({
   }, [fetchDealNotes]);
 
   useEffect(() => {
+    const contactIds = getDealContactIds(selectedDealDetails);
+    if (!contactIds?.length) {
+      setEnquiryNumbers([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+  try {
+    setEnquiryLoading(true);
+
+    const res = await fetch("/Contact/enquiry-numbers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contactIds),
+    });
+
+    if (!cancelled) {
+      const data = await res.json();
+      setEnquiryNumbers(Array.isArray(data) ? data : []);
+    }
+  } catch (err) {
+    console.error("Failed to fetch enquiry numbers", err);
+
+    if (!cancelled) {
+      setEnquiryNumbers([]);
+    }
+  } finally {
+    if (!cancelled) {
+      setEnquiryLoading(false);
+    }
+  }
+})();
+    return () => { cancelled = true; };
+  }, [selectedDealDetails?.contactIds, selectedDealDetails?.contactId]);
+
+  useEffect(() => {
     // Check query parameters first (from anchor tags)
     const queryDealId = searchParams.get('id');
     // Then check location state (from navigate with state)
@@ -926,17 +965,17 @@ function Deals({
   }, [openMenuId]);
 
   const hasActiveFilters =
-  !!localDealSearch?.trim() ||
-  !!search?.trim() ||
-  createdByFilter !== "all" ||
-  !!createdFrom ||
-  !!createdTo ||
-  !!updatedFrom ||
-  !!updatedTo ||
-  (Array.isArray(filters) && filters.length > 0);
+    !!localDealSearch?.trim() ||
+    !!search?.trim() ||
+    createdByFilter !== "all" ||
+    !!createdFrom ||
+    !!createdTo ||
+    !!updatedFrom ||
+    !!updatedTo ||
+    (Array.isArray(filters) && filters.length > 0);
 
   const orderedStages = hasActiveFilters
-  ? [...dealStages].sort((a, b) => {
+    ? [...dealStages].sort((a, b) => {
       const countA = dealsByStage[a]?.length || 0;
       const countB = dealsByStage[b]?.length || 0;
 
@@ -947,7 +986,7 @@ function Deals({
       // Keep original pipeline order among non-empty stages
       return dealStages.indexOf(a) - dealStages.indexOf(b);
     })
-  : dealStages;
+    : dealStages;
 
   const confirmDelete = async () => {
     if (!deleteDealId) return;
@@ -1402,7 +1441,7 @@ function Deals({
         {(detailsLoading || detailsError || selectedDealDetails) && (
           <div className="fixed inset-0 z-[3000] flex items-stretch justify-end pointer-events-none animate-in fade-in duration-300">
             <div className="bg-white shadow-2xl w-[60%] h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 text-sm pointer-events-auto">
-              <div className="flex flex-col gap-4 p-8 border-b border-gray-200/80 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col gap-4 p-4 border-b border-gray-200/80 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-5 justify-between">
                   <div className="flex items-center gap-5 flex-1">
                     <div className="w-16 h-16 rounded-full flex items-center justify-center font-semibold text-2xl shadow-xl transform hover:scale-105 transition-transform duration-200" style={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", color: "white" }}>
@@ -1414,15 +1453,45 @@ function Deals({
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                         {getAccountName(selectedDealDetails)}
                       </div>
+
                     </div>
                   </div>
                   <button className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center transition-all duration-200" onClick={handleCloseDetails}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <div className="flex items-center gap-2 justify-end">
-                  <button type="button" className="px-2 sm:px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-normal text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2" onClick={() => setShowNotesPanel(!showNotesPanel)} title="View Notes">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8M8 16h6M6 6h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+  <span className="text-gray-500">Enquiry No:</span>
+
+  {enquiryLoading ? (
+    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+  ) : (
+    <span className="font-medium text-indigo-600">
+      {enquiryNumbers?.join(", ") || "-"}
+    </span>
+  )}
+</div>
+
+                  <button
+                    type="button"
+                    className="px-2 sm:px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-normal text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+                    onClick={() => setShowNotesPanel(!showNotesPanel)}
+                    title="View Notes"
+                  >
+                    <svg
+                      className="w-5 h-5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h8M8 16h6M6 6h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z"
+                      />
+                    </svg>
                     <span>Notes</span>
                   </button>
                 </div>
@@ -1678,7 +1747,7 @@ function Deals({
                                   onChange={e => setContactSearchTerm(e.target.value)}
                                   className="w-full rounded-xl px-4 py-3.5 pr-10 text-gray-800 bg-gray-50 border-2 border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-150"
                                 />
-                                {selectedContacts.length > 0 && (
+                                {/* {selectedContacts.length > 0 && (
                                   <button
                                     type="button"
                                     onMouseDown={() => {
@@ -1702,7 +1771,7 @@ function Deals({
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                   </button>
-                                )}
+                                )} */}
                                 {selectedContacts.length > 0 && (
                                   <div className="flex flex-wrap gap-2 mt-2">
                                     {selectedContacts.map((contact) => (

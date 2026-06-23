@@ -21,6 +21,7 @@ const FormInput = ({
   step,
   error,
   className = "",
+  inputRef,
 }) => (
   <div className="space-y-1.5">
     {label && (
@@ -29,7 +30,17 @@ const FormInput = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
     )}
+    {/* Error banner shown ABOVE the field */}
+    {error && (
+      <div className="flex items-start gap-1.5 px-2.5 py-1.5 rounded-md bg-red-50 border border-red-300">
+        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p className="text-xs text-red-700 font-semibold leading-snug">{error}</p>
+      </div>
+    )}
     <input
+      ref={inputRef}
       name={name}
       type={type}
       placeholder={placeholder}
@@ -41,9 +52,8 @@ const FormInput = ({
       defaultValue={defaultValue}
       step={step}
       className={`w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-slate-300 ${disabled ? "bg-slate-50 cursor-not-allowed text-slate-500" : ""
-        } ${error ? "border-red-500 focus:ring-red-500" : ""} ${className}`}
+        } ${error ? "border-red-500 focus:ring-red-500 bg-red-50/30" : ""} ${className}`}
     />
-    {error && <p className="text-xs text-red-500 font-medium mt-1">{error}</p>}
   </div>
 );
 
@@ -207,6 +217,9 @@ function AddForms({
   dealPrefill,
 }) {
   // ============ STATE ============
+
+  // Form field errors for validation
+  const [contactErrors, setContactErrors] = useState({});
   // Countries/states/cities for contacts form
   const [contactCountry, setContactCountry] = useState("");
   const [contactState, setContactState] = useState("");
@@ -329,6 +342,9 @@ function AddForms({
   const accountRef = useRef(null);
   const contactRef = useRef(null);
 
+  // State to control whether to generate an enquiry number automatically or not
+  const [generateEnquiryNo, setGenerateEnquiryNo] = useState(false);
+
   const getContactDisplayName = (contact) => {
     if (!contact) return "";
     const id = contact?.ContactId ?? contact?.contactId ?? contact?.Id ?? contact?.id;
@@ -425,6 +441,7 @@ function AddForms({
     WebForms: "",
     ImportID: "",
     Account: "",
+    EnquiryNo: "", //EnquiryNo:"EITSPL-EQ-",
   });
 
   // Account form fields state
@@ -498,8 +515,15 @@ function AddForms({
   // Helper function to update contact form fields
   const updateContactField = (fieldName, value) => {
     setContactFormData(prev => ({ ...prev, [fieldName]: value }));
-  };
 
+    if (fieldName === "WorkEmail" || fieldName === "Email") {
+      setContactErrors(prev => ({
+        ...prev,
+        WorkEmail: "",
+        Email: "",
+      }));
+    }
+  };
   // Helper function to update account form fields
   const updateAccountField = (fieldName, value) => {
     setAccountFormData(prev => ({ ...prev, [fieldName]: value }));
@@ -647,20 +671,20 @@ function AddForms({
   // State callbacks are passed to BusinessCardUpload component for field population
 
   const previousAccountId = useRef("");
-useEffect(() => {
-  // Ignore initial load/prefill
-  if (previousAccountId.current === "") {
-    previousAccountId.current = selectedAccountId;
-    return;
-  }
- 
-  // Only clear when user actually changes account
-  if (previousAccountId.current !== selectedAccountId) {
-    setSelectedContactId("");
-    setContactSearch("");
-    previousAccountId.current = selectedAccountId;
-  }
-}, [selectedAccountId]);
+  useEffect(() => {
+    // Ignore initial load/prefill
+    if (previousAccountId.current === "") {
+      previousAccountId.current = selectedAccountId;
+      return;
+    }
+
+    // Only clear when user actually changes account
+    if (previousAccountId.current !== selectedAccountId) {
+      setSelectedContactId("");
+      setContactSearch("");
+      previousAccountId.current = selectedAccountId;
+    }
+  }, [selectedAccountId]);
 
   if (type === "contacts") {
     const toggleSectionContact = (section) => {
@@ -683,8 +707,7 @@ useEffect(() => {
           }
           // Only include user-editable fields for insert (do NOT send ContactId or system-managed fields)
           const fields = [
-            "FirstName", "LastName", "JobTitle", "WorkEmail", "Email", "WorkPhone", "Mobile", "LinkedIn", "Facebook", "Twitter", "Phone", "Address", "Country", "State", "City", "Zipcode", "TimeZone", "Locale", "SalesOwner", "Status", "LifeCycleStage", "Territory", "Source", "Campaign", "CustomerFit", "Score", "SubscriptionStatus", "UnsubscribeReason", "OtherUnsubscribeReasons", "WhatsAppSubscriptionStatus", "SMSSubscriptionStatus", "Tags", "Medium", "Keyword", "LostReason", "OriginalCampaign", "OriginalMedium", "OriginalSource", "CreatedThroughCampaign", "CreatedFromMedium", "CreatedFromSource", "MostRecentCampaign", "MostRecentMedium", "MostRecentSource", "ExternalID", "WebForms", "ImportID"
-          ];
+            "FirstName", "LastName", "JobTitle", "WorkEmail",  "WorkPhone", "Mobile", "LinkedIn", "Facebook", "Twitter", "Phone", "Address", "Country", "State", "City", "Zipcode", "TimeZone", "Locale", "SalesOwner", "Status", "LifeCycleStage", "Territory", "Source", "Campaign", "CustomerFit", "Score", "SubscriptionStatus", "UnsubscribeReason", "OtherUnsubscribeReasons", "WhatsAppSubscriptionStatus", "SMSSubscriptionStatus", "Tags", "Medium", "Keyword", "LostReason", "OriginalCampaign", "OriginalMedium", "OriginalSource", "CreatedThroughCampaign", "CreatedFromMedium", "CreatedFromSource", "MostRecentCampaign", "MostRecentMedium", "MostRecentSource", "ExternalID", "WebForms", "ImportID"];
           // Numeric fields that need type conversion
           const numericFields = ["Score", "TotalChatSessions", "ActiveSalesSequences", "CompletedSalesSequences"];
           const newContact = {};
@@ -709,15 +732,22 @@ useEffect(() => {
 
             newContact[toCamelCase(key)] = val;
           });
+          // "Email" on the form maps to the backend's plural `Emails` field
+          // (ContactModel has WorkEmail + Emails, no singular Email property).
+          const emailVal = (contactFormData.Email || "").trim();
+          if (emailVal) {
+            newContact.emails = emailVal;
+            newContact.Emails = emailVal;
+          }
           // Account: persist both ID and name (DB FK + display). Send PascalCase + camelCase so binding always works.
           const accIdVal = selectedAccountId ? Number(selectedAccountId) : NaN;
           const hasValidAccountId = Number.isFinite(accIdVal) && accIdVal > 0;
           const accObj =
             hasValidAccountId && mergedAccountsForLookup.length
               ? mergedAccountsForLookup.find((a) => {
-                  const id = a?.AccountId ?? a?.accountId ?? a?.Id ?? a?.id;
-                  return String(id) === String(selectedAccountId);
-                })
+                const id = a?.AccountId ?? a?.accountId ?? a?.Id ?? a?.id;
+                return String(id) === String(selectedAccountId);
+              })
               : null;
           const accName =
             (accObj && (accObj.Name ?? accObj.name ?? "")) ||
@@ -738,7 +768,7 @@ useEffect(() => {
           newContact.createdBy = savedUserName || "Unknown";
           newContact.updatedBy = savedUserName || "Unknown";
           try {
-            await apiClient.post(`/Contact`, newContact, {
+            await apiClient.post(`/Contact?generateEnquiryNo=${generateEnquiryNo}`, newContact, {
               headers: { "Content-Type": "application/json" },
             });
             // Dispatch event to notify other components to refetch
@@ -811,20 +841,36 @@ useEffect(() => {
             }
           } catch (err) {
             let msg = "Failed to add contact.";
-            if (err.response) {
-              msg += `\nStatus: ${err.response.status}`;
-              if (err.response.data) {
-                if (typeof err.response.data === "string") {
-                  msg += `\nResponse: ${err.response.data}`;
-                } else if (typeof err.response.data === "object") {
-                  msg += `\nResponse: ${JSON.stringify(err.response.data)}`;
-                }
-              }
-            } else if (err.message) {
-              msg += `\nError: ${err.message}`;
+
+            // apiClient's response interceptor already unwraps error.response.data,
+            // so `err` itself is { message: "..." } — not err.response.data.message.
+            if (err?.message) {
+              msg = err.message;
+            } else if (err?.response?.data?.message) {
+              // fallback, in case a raw axios error ever reaches here
+              msg = err.response.data.message;
             }
-            alert(msg);
-            if (onError) onError(msg);
+
+            if (
+              msg.toLowerCase().includes("email already exists") ||
+              msg.toLowerCase().includes("contact with this email")
+            ) {
+              setContactErrors({
+                WorkEmail: msg,
+                Email: msg,
+              });
+
+              setExpandedSectionsContact(prev => ({ ...prev, contact: true }));
+
+              setTimeout(() => {
+                const el = document.querySelector('input[name="WorkEmail"]');
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 100);
+
+              return; // STOP HERE
+            }
+
+            onError?.(msg);
           } finally {
             setIsSaving(false);
           }
@@ -877,6 +923,7 @@ useEffect(() => {
                     required={true}
                     value={contactFormData[col.key]}
                     onChange={(e) => updateContactField(col.key, e.target.value)}
+                    error={contactErrors[col.key]}
                   />
                 );
               } else if (col.key === "Facebook" || col.key === "Twitter" || col.key === "LinkedIn") {
@@ -1020,6 +1067,24 @@ useEffect(() => {
 
             return (
               <>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-label flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={generateEnquiryNo}
+                      onChange={(e) => setGenerateEnquiryNo(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    />
+                    Generate Enquiry Number
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    readOnly
+                    value={generateEnquiryNo ? "Will be auto-generated (e.g. EITSPL-EQ-003)" : "Not generated"}
+                    className="w-full px-3 py-2.5 rounded-lg border-2 border-slate-200 bg-slate-50 text-sm text-slate-500 cursor-not-allowed"
+                  />
+                </div>
                 {/* SECTION 1: Personal Information */}
                 <FormSection
                   title="Personal Information"
@@ -1057,8 +1122,6 @@ useEffect(() => {
                       { key: "Facebook", label: "Facebook", type: "url" },
                       { key: "Twitter", label: "Twitter", type: "url" },
                       { key: "WorkEmail", label: "Work Email", type: "email" },
-
-
                     ].map(field => (
                       <div key={field.key}>
                         {renderField(field)}
@@ -1219,7 +1282,7 @@ useEffect(() => {
                 d="M5 13l4 4L19 7"
               />
             </svg>
-  
+
             {isSaving ? "Saving..." : "Save Contact"}
           </button>
         </div>
@@ -2167,7 +2230,7 @@ useEffect(() => {
 
                 <input
                   type="text"
-                  value={contactSearch}
+                  value={showContacts ? contactSearch : selectedContactNames.length > 0 ? selectedContactNames.join(", ") : contactSearch}
                   placeholder={
                     !selectedAccountId
                       ? "Select an account first…"
@@ -2181,12 +2244,11 @@ useEffect(() => {
                   }}
                   onFocus={() => selectedAccountId && setShowContacts(true)}
                   disabled={!selectedAccountId || accountContactsLoading}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border-2 disabled:bg-gray-100 disabled:text-gray-500 ${selectedContactIds.length === 0 ? "border-gray-200" : "border-green-400"
+                    }`}
                 />
 
-                <input type="hidden" name="ContactId" value={selectedContactId} />
-
+                <input type="hidden" name="ContactIds" value={selectedContactIds.join(",")} />
                 {selectedContactIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selectedContactIds.map((id, index) => {
@@ -2222,40 +2284,40 @@ useEffect(() => {
                       Loading contacts…
                     </div>
                   ) : contactPickerRows.length > 0 ? (
-                      <div className="absolute z-[9999] w-full bg-white border-2 border-blue-300 rounded-lg shadow-2xl max-h-60 overflow-y-auto mt-1" style={{ top: "100%" }}>
-                        {contactPickerRows.map((c) => {
-                          const id =
-                            c?.ContactId ?? c?.contactId ?? c?.Id ?? c?.id;
+                    <div className="absolute z-[9999] w-full bg-white border-2 border-blue-300 rounded-lg shadow-2xl max-h-60 overflow-y-auto mt-1" style={{ top: "100%" }}>
+                      {contactPickerRows.map((c) => {
+                        const id =
+                          c?.ContactId ?? c?.contactId ?? c?.Id ?? c?.id;
 
-                          const first = c?.FirstName ?? c?.firstName ?? "";
-                          const last = c?.LastName ?? c?.lastName ?? "";
-                          const name = `${first} ${last}`.trim() || getContactDisplayName(c);
-                          const isSelected = selectedContactIds.some((contactId) => String(contactId) === String(id));
+                        const first = c?.FirstName ?? c?.firstName ?? "";
+                        const last = c?.LastName ?? c?.lastName ?? "";
+                        const name = `${first} ${last}`.trim() || getContactDisplayName(c);
+                        const isSelected = selectedContactIds.some((contactId) => String(contactId) === String(id));
 
-                          return (
-                            <div
-                              key={id}
-                              onClick={() => {
-                                const current = selectedContactIds.map((itemId, index) => ({
-                                  id: itemId,
-                                  name: selectedContactNames[index] || `Contact ${itemId}`,
-                                }));
-                                const next = isSelected
-                                  ? current.filter((item) => String(item.id) !== String(id))
-                                  : [...current, { id, name: name || `Contact ${id}` }];
-                                syncSelectedContactState(next);
-                                setContactSearch("");
-                                setShowContacts(true);
-                              }}
-                              className={`px-4 py-2.5 cursor-pointer hover:bg-blue-100 border-b border-gray-100 last:border-b-0 transition-colors duration-150 flex items-center justify-between gap-3 ${isSelected ? "bg-blue-50 text-blue-700" : ""}`}
-                            >
-                              <p className="text-sm font-medium text-gray-800">{name || `Contact ${id}`}</p>
-                              {isSelected && <span className="text-xs font-medium">Selected</span>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
+                        return (
+                          <div
+                            key={id}
+                            onClick={() => {
+                              const current = selectedContactIds.map((itemId, index) => ({
+                                id: itemId,
+                                name: selectedContactNames[index] || `Contact ${itemId}`,
+                              }));
+                              const next = isSelected
+                                ? current.filter((item) => String(item.id) !== String(id))
+                                : [...current, { id, name: name || `Contact ${id}` }];
+                              syncSelectedContactState(next);
+                              setContactSearch("");
+                              setShowContacts(true);
+                            }}
+                            className={`px-4 py-2.5 cursor-pointer hover:bg-blue-100 border-b border-gray-100 last:border-b-0 transition-colors duration-150 flex items-center justify-between gap-3 ${isSelected ? "bg-blue-50 text-blue-700" : ""}`}
+                          >
+                            <p className="text-sm font-medium text-gray-800">{name || `Contact ${id}`}</p>
+                            {isSelected && <span className="text-xs font-medium">Selected</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
                     <div className="absolute z-[9999] w-full bg-white border-2 border-blue-200 rounded-lg shadow-xl mt-1 px-4 py-3 text-sm text-gray-500" style={{ top: "100%" }}>
                       {contactSearch.trim().length >= 1
                         ? "No contacts match this search for the selected account."
@@ -2325,13 +2387,13 @@ useEffect(() => {
               >
                 <option value="">Select Deal Stage</option>
                 <option>New Lead</option>
-                <option>Need Analysis</option>
+                <option>Enquiry Analysis</option>
                 <option>Under Review</option>
                 <option>Demo</option>
                 <option>Proposal/Price Quote</option>
                 <option>Hold</option>
                 <option>Negotiation/Review</option>
-                <option>Follow Up</option>
+                {/* <option>Follow Up</option> */}
                 <option>PO Received</option>
                 <option>Won</option>
                 <option>Lost</option>
