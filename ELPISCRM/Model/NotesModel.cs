@@ -17,5 +17,10 @@ namespace Elpis_CRM.Model
         public long? ContactId { get; set; }
         public string? RelatedToType { get; set; }
         public long? DealId { get; set; }
+        [NotMapped]
+        public List<long>? MirrorToContactIds { get; set; }
+
+        [NotMapped]
+        public List<long>? MirrorToDealIds { get; set; }
     }
 }
