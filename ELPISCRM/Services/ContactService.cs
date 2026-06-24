@@ -447,7 +447,8 @@ namespace Elpis_CRM.Services
         }
 
         // Update contact
-        public async Task<ContactModel?> UpdateAsync(long id, ContactModel contact)
+        // Update contact
+        public async Task<ContactModel?> UpdateAsync(long id, ContactModel contact, bool generateEnquiryNo = false)
         {
             var existing = await _contactContext.Contacts
                 .FirstOrDefaultAsync(c => c.ContactId == id);
@@ -500,7 +501,15 @@ namespace Elpis_CRM.Services
             existing.LastSeenOnWeb = now;
             existing.LastContactedTime = now;
             existing.UpdatedAt = now;
-            existing.EnquiryNo = contact.EnquiryNo;
+
+            // EnquiryNo is only touched on update when explicitly requested via the
+            // "Generate Enquiry Number" checkbox. Otherwise the existing value is
+            // preserved as-is — we deliberately do NOT take it from the incoming
+            // `contact` payload, since callers may omit/blank it unintentionally.
+            if (generateEnquiryNo && string.IsNullOrWhiteSpace(existing.EnquiryNo))
+            {
+                existing.EnquiryNo = await GenerateNextEnquiryNoAsync();
+            }
 
             await _contactContext.SaveChangesAsync();
             return existing;

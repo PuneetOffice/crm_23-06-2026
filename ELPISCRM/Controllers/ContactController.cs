@@ -248,20 +248,24 @@ namespace Elpis_CRM.Controllers
         /// </summary>
         /// <param name="contactId">The contact ID.</param>
         /// <param name="contact">Updated contact data.</param>
+        /// <param name="generateEnquiryNo">If true, the system generates a fresh sequential EnquiryNo (e.g. EITSPL-EQ-003), overwriting any existing value. If false, the existing EnquiryNo is left untouched.</param>
         /// <returns>Update confirmation and updated contact.</returns>
         /// <response code="200">Contact updated successfully</response>
         /// <response code="400">Invalid contact data</response>
         /// <response code="404">Contact not found</response>
         [HttpPut("{contactId:long}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,Manager,User")]
-        public async Task<ActionResult> UpdateAsync(long contactId, [FromBody] ContactModel contact)
+        public async Task<ActionResult> UpdateAsync(
+            long contactId,
+            [FromBody] ContactModel contact,
+            [FromQuery] bool generateEnquiryNo = false)
         {
             if (contact == null)
             {
                 return BadRequest("Contact data cannot be null.");
             }
 
-            var updated = await _contactService.UpdateAsync(contactId, contact);
+            var updated = await _contactService.UpdateAsync(contactId, contact, generateEnquiryNo);
 
             if (updated == null)
             {
