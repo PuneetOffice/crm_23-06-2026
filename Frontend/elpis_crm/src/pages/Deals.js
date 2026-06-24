@@ -305,6 +305,61 @@ function Deals({
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [editingNoteText, setEditingNoteText] = useState("");
 
+  // ── Note destination checklist state ────────────────────────────────────
+  // Lets the user choose, per deal note, whether it should also appear on one
+  // or more of the deal's linked contacts, or stay on the deal only.
+  const [noteContactSelections, setNoteContactSelections] = useState(() => new Set());
+  const [noteDealOnlySelected, setNoteDealOnlySelected] = useState(false);
+  const [noteDestinationError, setNoteDestinationError] = useState("");
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const contactDropdownRef = useRef(null);
+
+  // Reset the checklist whenever the add-note box is opened/closed or the
+  // open deal changes, so stale selections from a previous note don't leak in.
+  useEffect(() => {
+    setNoteContactSelections(new Set());
+    setNoteDealOnlySelected(false);
+    setNoteDestinationError("");
+  }, [showAddNoteBox, selectedDealDetails?.dealId, selectedDealDetails?.id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        contactDropdownRef.current &&
+        !contactDropdownRef.current.contains(event.target)
+      ) {
+        setShowContactDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  function toggleNoteContact(contactId) {
+    setNoteContactSelections((prev) => {
+      const next = new Set(prev);
+      if (next.has(contactId)) next.delete(contactId);
+      else next.add(contactId);
+
+      // Auto-check "This deal only" once at least one contact is selected;
+      // auto-release it back to unchecked only once no contacts remain checked.
+      setNoteDealOnlySelected((wasChecked) => (next.size > 0 ? true : wasChecked && false));
+      return next;
+    });
+    setNoteDestinationError("");
+  }
+
+  function toggleNoteDealOnly() {
+    // Locked on while any contact is selected — once a contact is checked,
+    // "This deal only" is forced on and can't be unchecked independently.
+    if (noteContactSelections.size > 0) return;
+    setNoteDealOnlySelected((v) => !v);
+    setNoteDestinationError("");
+  }
+
   function formatDateOnly(val) {
     if (val === null || val === undefined || val === "") return "";
     const d = new Date(val);
@@ -785,31 +840,31 @@ function Deals({
     }
     let cancelled = false;
     (async () => {
-  try {
-    setEnquiryLoading(true);
+      try {
+        setEnquiryLoading(true);
 
-    const res = await fetch("/Contact/enquiry-numbers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(contactIds),
-    });
+        const res = await fetch("/Contact/enquiry-numbers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactIds),
+        });
 
-    if (!cancelled) {
-      const data = await res.json();
-      setEnquiryNumbers(Array.isArray(data) ? data : []);
-    }
-  } catch (err) {
-    console.error("Failed to fetch enquiry numbers", err);
+        if (!cancelled) {
+          const data = await res.json();
+          setEnquiryNumbers(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch enquiry numbers", err);
 
-    if (!cancelled) {
-      setEnquiryNumbers([]);
-    }
-  } finally {
-    if (!cancelled) {
-      setEnquiryLoading(false);
-    }
-  }
-})();
+        if (!cancelled) {
+          setEnquiryNumbers([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setEnquiryLoading(false);
+        }
+      }
+    })();
     return () => { cancelled = true; };
   }, [selectedDealDetails?.contactIds, selectedDealDetails?.contactId]);
 
@@ -847,8 +902,31 @@ function Deals({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchHighlight]);
 
+  // Contacts linked to the currently open deal, used to populate the
+  // note-destination checklist (id + display name only).
+  const noteEligibleContacts = useMemo(() => {
+    if (!selectedDealDetails) return [];
+    const ids = getDealContactIds(selectedDealDetails);
+    const names = getDealContactNames(selectedDealDetails);
+    return ids.map((id, index) => {
+      const fromSlide = dealSlideContacts.find(
+        (c) => String(c.contactId ?? c.ContactId ?? c.id ?? c.Id) === String(id)
+      );
+      return {
+        id,
+        name: fromSlide ? getContactDisplayName(fromSlide) : names[index] || `Contact ${id}`,
+      };
+    });
+  }, [selectedDealDetails, dealSlideContacts]);
+
   const handleSaveDealNote = async () => {
     if (!newDealNote.trim() || !selectedDealDetails) return;
+
+    // Require an explicit destination choice before saving.
+    if (noteContactSelections.size === 0 && !noteDealOnlySelected) {
+      setNoteDestinationError("Choose where this note should appear before saving.");
+      return;
+    }
 
     try {
       const dealId =
@@ -860,6 +938,9 @@ function Deals({
         dealId: dealId,
         description: newDealNote,
         relatedToType: "Deal",
+        // Backend writes one independent copy per contact id here, in addition
+        // to the original deal note. Empty array = deal-only.
+        mirrorToContactIds: Array.from(noteContactSelections),
       };
 
       // Dummy endpoint
@@ -877,6 +958,10 @@ function Deals({
         setDealNotes((prev) => [savedNote, ...prev]);
         setNewDealNote("");
         setShowAddNoteBox(false);
+        setShowContactDropdown(false);
+        setNoteContactSelections(new Set());
+        setNoteDealOnlySelected(false);
+        setNoteDestinationError("");
 
         if (onToast) {
           onToast("Note added successfully", "success");
@@ -1086,6 +1171,97 @@ function Deals({
 
   // Count deals currently visible — rawDeals already filtered server-side by localDealSearch
   const visibleDealCount = Object.values(dealsByStage).reduce((sum, arr) => sum + arr.length, 0);
+
+  // Shared note-destination checklist UI — rendered above the note textarea
+  // wherever "Add Note" is opened (right-side Notes slider and the inline
+  // notes panel inside the deal slide-in both reuse this).
+  const selectedContactsText = (() => {
+    if (noteDealOnlySelected && noteContactSelections.size === 0) {
+      return "This Deal Only";
+    }
+    const selectedNames = noteEligibleContacts
+      .filter((c) => noteContactSelections.has(c.id))
+      .map((c) => c.name);
+    if (selectedNames.length === 0) {
+      return "Select Destination";
+    }
+    if (selectedNames.length <= 2) {
+      return selectedNames.join(", ");
+    }
+    return `${selectedNames
+      .slice(0, 2)
+      .join(", ")} +${selectedNames.length - 2} more`;
+  })();
+
+  const noteDestinationChecklist = (
+    <div
+      className="rounded-2xl border-2 border-gray-200 bg-white p-4"
+      ref={contactDropdownRef}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+        Show this note in
+      </p>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowContactDropdown((v) => !v)}
+          className="w-full flex items-center justify-between rounded-xl border border-gray-300 px-3 py-2 text-sm bg-white hover:border-blue-400"
+        >
+          <span className="truncate">
+            {selectedContactsText}
+          </span>
+          <svg
+            className={`w-4 h-4 transition-transform ${
+              showContactDropdown ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+        {showContactDropdown && (
+          <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+            {noteEligibleContacts.map((contact) => (
+              <label
+                key={contact.id}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={noteContactSelections.has(contact.id)}
+                  onChange={() => toggleNoteContact(contact.id)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">
+                  {contact.name}
+                </span>
+              </label>
+            ))}
+            <div className="border-t border-gray-200 my-1" />
+            <label className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer bg-gray-50">
+              <input
+                type="checkbox"
+                checked={noteDealOnlySelected}
+                onChange={toggleNoteDealOnly}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">
+                This Deal Only
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full font-[poppins,sans-serif] bg-gray-50">
@@ -1297,6 +1473,7 @@ function Deals({
                   </button>
                 ) : (
                   <div className="space-y-3 animate-in fade-in duration-200">
+                    {noteDestinationChecklist}
                     <AutoGrowTextarea
                       minRows={4}
                       placeholder="Write note..."
@@ -1304,6 +1481,9 @@ function Deals({
                       onChange={(e) => setNewDealNote(e.target.value)}
                       className="w-full rounded-2xl border-2 border-gray-200 focus:border-blue-500 outline-none px-4 py-3"
                     />
+                    {noteDestinationError && (
+        <p className="text-xs text-red-600 pt-1">{noteDestinationError}</p>
+      )}
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -1316,7 +1496,11 @@ function Deals({
                         type="button"
                         onClick={() => {
                           setShowAddNoteBox(false);
+                          setShowContactDropdown(false);
                           setNewDealNote("");
+                          setNoteContactSelections(new Set());
+                          setNoteDealOnlySelected(false);
+                          setNoteDestinationError("");
                         }}
                         className="px-5 py-3 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-700"
                       >
@@ -1462,16 +1646,16 @@ function Deals({
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-  <span className="text-gray-500">Enquiry No:</span>
+                    <span className="text-gray-500">Enquiry No:</span>
 
-  {enquiryLoading ? (
-    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-  ) : (
-    <span className="font-medium text-indigo-600">
-      {enquiryNumbers?.join(", ") || "-"}
-    </span>
-  )}
-</div>
+                    {enquiryLoading ? (
+                      <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span className="font-medium text-indigo-600">
+                        {enquiryNumbers?.join(", ") || "-"}
+                      </span>
+                    )}
+                  </div>
 
                   <button
                     type="button"
@@ -1952,6 +2136,41 @@ function Deals({
                           {showAddNoteBox ? "Cancel" : "+ Add Note"}
                         </button>
                       </div>
+
+                      {showAddNoteBox && (
+                        <div className="space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                          {noteDestinationChecklist}
+                          <AutoGrowTextarea
+                            minRows={3}
+                            placeholder="Write note..."
+                            value={newDealNote}
+                            onChange={(e) => setNewDealNote(e.target.value)}
+                            className="w-full rounded-xl border-2 border-gray-200 focus:border-blue-500 outline-none px-3 py-2"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleSaveDealNote}
+                              className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                            >
+                              Save Note
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAddNoteBox(false);
+                                setNewDealNote("");
+                                setNoteContactSelections(new Set());
+                                setNoteDealOnlySelected(false);
+                                setNoteDestinationError("");
+                              }}
+                              className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="space-y-3">
                         {notesLoading ? (
