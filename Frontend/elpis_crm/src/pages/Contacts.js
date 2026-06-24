@@ -107,6 +107,10 @@ function Contacts({
   // Account picker in contact slide-in (separate from table search)
   const [slideAccountSearch, setSlideAccountSearch] = useState("");
   const [slideAccountMenuOpen, setSlideAccountMenuOpen] = useState(false);
+
+  // Slide-in "Generate Enquiry No" modal state
+  const [slideGenerateEnquiryNo, setSlideGenerateEnquiryNo] = useState(false);
+
   const slideAccountListSyncRef = useRef(null);
   const [debouncedSlideAccountSearch, setDebouncedSlideAccountSearch] = useState("");
   const [slideAccountSearchLoading, setSlideAccountSearchLoading] = useState(false);
@@ -388,6 +392,7 @@ function Contacts({
   const [selectedContactDetails, setSelectedContactDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState(null);
+  const hasEnquiryNo = Boolean(selectedContactDetails?.EnquiryNo || selectedContactDetails?.enquiryNo);
 
   // Get all countries
   const countries = Country.getAllCountries();
@@ -483,6 +488,7 @@ function Contacts({
     setSelectedContactDetails(null);
     setSlideAccountSearch("");
     setSlideAccountMenuOpen(false);
+    setSlideGenerateEnquiryNo(false); 
     slideAccountListSyncRef.current = null;
     try {
       const res = await fetch(`/Contact/${encodeURIComponent(contactId)}`);
@@ -507,8 +513,15 @@ function Contacts({
     setDetailsLoading(false);
     setSlideAccountSearch("");
     setSlideAccountMenuOpen(false);
+    setSlideGenerateEnquiryNo(false);
     slideAccountListSyncRef.current = null;
   };
+
+  React.useEffect(() => {
+    if (selectedContactDetails) {
+      setSlideGenerateEnquiryNo(false);
+    }
+  }, [selectedContactDetails?.ContactId, selectedContactDetails?.contactId]);
 
   // Handle opening contact from query parameter
   const [searchParams] = useSearchParams();
@@ -2038,7 +2051,7 @@ function Contacts({
                       };
 
                       const res = await fetch(
-                        `/Contact/${encodeURIComponent(getField(selectedContactDetails, "ContactId") ?? getField(selectedContactDetails, "contactId") ?? selectedContactDetails.ContactId ?? selectedContactDetails.contactId)}`,
+                        `/Contact/${encodeURIComponent(getField(selectedContactDetails, "ContactId") ?? getField(selectedContactDetails, "contactId") ?? selectedContactDetails.ContactId ?? selectedContactDetails.contactId)}?generateEnquiryNo=${slideGenerateEnquiryNo}`,
                         {
                           method: "PUT",
                           headers: { "Content-Type": "application/json" },
@@ -2049,6 +2062,7 @@ function Contacts({
                         await refetch();
                         onToast &&
                           onToast("Contact updated successfully", "success");
+                        setSlideGenerateEnquiryNo(false);
                         handleCloseContactDetails();
                       } else {
                         onToast && onToast("Failed to update contact", "error");
@@ -2407,6 +2421,31 @@ function Contacts({
                               )}
                             </div>
                           ))}
+                        </div>
+
+                        {/* Generate Enquiry Number on update */}
+                        <div className="mt-6 pt-5 border-t border-gray-200">
+                          <label className={`flex items-center gap-2 ${hasEnquiryNo ? "opacity-50 cursor-not-allowed" : "cursor-pointer select-none"}`}>
+                            <input
+                              type="checkbox"
+                              checked={slideGenerateEnquiryNo}
+                              disabled={hasEnquiryNo}
+                              onChange={(e) => setSlideGenerateEnquiryNo(e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="font-normal text-gray-700 text-sm">
+                              Generate Enquiry Number
+                            </span>
+                          </label>
+                          <p className="text-xs text-gray-500 mt-1.5 ml-6">
+                            {hasEnquiryNo
+                              ? `Already generated: ${selectedContactDetails?.EnquiryNo || selectedContactDetails?.enquiryNo}`
+                              : slideGenerateEnquiryNo
+                                ? "A new Enquiry Number will be generated on save."
+                                : selectedContactDetails?.EnquiryNo || selectedContactDetails?.enquiryNo
+                                  ? `Current: ${selectedContactDetails.EnquiryNo || selectedContactDetails.enquiryNo}`
+                                  : "Not generated"}
+                          </p>
                         </div>
                       </div>
 

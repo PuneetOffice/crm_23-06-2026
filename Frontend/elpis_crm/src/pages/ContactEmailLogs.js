@@ -1008,6 +1008,11 @@ export default function ContactEmailLogs({
 
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [editNote, setEditNote] = useState(null);
+  const [noteDealSelections, setNoteDealSelections] = useState(() => new Set());
+  const [noteDealOnlySelected, setNoteDealOnlySelected] = useState(false);
+  const [noteDestinationError, setNoteDestinationError] = useState("");
+  const [showDealDropdown, setShowDealDropdown] = useState(false);
+  const dealDropdownRef = useRef(null);
 
   const [deleteNoteId, setDeleteNoteId] = useState(null);
   const [showDeleteNoteModal, setShowDeleteNoteModal] = useState(false);
@@ -1021,6 +1026,71 @@ export default function ContactEmailLogs({
     NoteId: "",
     Description: "",
   });
+
+  const noteEligibleDeals = useMemo(() => {
+    if (!Array.isArray(deals)) return [];
+    return deals.map((deal) => {
+      const id = deal.dealId ?? deal.id ?? deal.DealId ?? deal.Id ?? "";
+      const name = deal.name ?? deal.DealName ?? deal.dealName ?? String(id);
+      return { id, name };
+    });
+  }, [deals]);
+
+  const selectedDealsText = (() => {
+    if (noteDealOnlySelected && noteDealSelections.size === 0) {
+      return "This Contact Only";
+    }
+    const selectedNames = noteEligibleDeals
+      .filter((deal) => noteDealSelections.has(deal.id))
+      .map((deal) => deal.name);
+    if (selectedNames.length === 0) {
+      return "Select Destination";
+    }
+    if (selectedNames.length <= 2) {
+      return selectedNames.join(", ");
+    }
+    return `${selectedNames.slice(0, 2).join(", ")} +${selectedNames.length - 2} more`;
+  })();
+
+  function toggleNoteDeal(dealId) {
+    setNoteDealSelections((prev) => {
+      const next = new Set(prev);
+      if (next.has(dealId)) next.delete(dealId);
+      else next.add(dealId);
+
+      if (next.size > 0) {
+        setNoteDealOnlySelected(true);
+      }
+      return next;
+    });
+    setNoteDestinationError("");
+  }
+
+  function toggleNoteDealOnly() {
+    if (noteDealSelections.size > 0) return;
+    setNoteDealOnlySelected((v) => !v);
+    setNoteDestinationError("");
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dealDropdownRef.current && !dealDropdownRef.current.contains(event.target)) {
+        setShowDealDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    setNoteDealSelections(new Set());
+    setNoteDealOnlySelected(false);
+    setNoteDestinationError("");
+    setShowDealDropdown(false);
+  }, [showNoteForm, contactId]);
 
   // ====================== FETCH NOTES ======================
   const fetchNotes = useCallback(async () => {
@@ -1065,16 +1135,28 @@ export default function ContactEmailLogs({
     }
   }, [activeTab, fetchNotes]);
 
+  useEffect(() => {
+    if (contactId) {
+      fetchDeals();
+    }
+  }, [contactId, fetchDeals]);
+
   // ====================== ADD / UPDATE NOTE ======================
   const handleNoteSubmit = async (e) => {
     e.preventDefault();
 
     const url = editNote ? `/Notes/${noteForm.NoteId}` : `/Notes`;
 
+    if (noteDealSelections.size === 0 && !noteDealOnlySelected) {
+      setNoteDestinationError("Choose where this note should appear before saving.");
+      return;
+    }
+
     const payload = {
       id: editNote ? noteForm.NoteId : undefined,
       description: noteForm.Description,
       contactId: Number(contactId),
+      mirrorToDealIds: Array.from(noteDealSelections),
     };
 
     if (!editNote) delete payload.Id;
@@ -1086,6 +1168,10 @@ export default function ContactEmailLogs({
 
       setShowNoteForm(false);
       setEditNote(null);
+      setShowDealDropdown(false);
+      setNoteDealSelections(new Set());
+      setNoteDealOnlySelected(false);
+      setNoteDestinationError("");
 
       setNoteForm({
         NoteId: "",
@@ -2669,6 +2755,10 @@ export default function ContactEmailLogs({
                   setShowNoteForm(true);
                   setEditNote(null);
                   setNoteForm({ NoteId: "", Description: "" });
+                  setShowDealDropdown(false);
+                  setNoteDealSelections(new Set());
+                  setNoteDealOnlySelected(false);
+                  setNoteDestinationError("");
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 
                   hover:from-indigo-700 hover:to-indigo-800 
@@ -2802,7 +2892,7 @@ export default function ContactEmailLogs({
                         </div>
                         <h3 className="text-white">{editNote ? "Edit Note" : "New Note"}</h3>
                       </div>
-                      <button type="button" className="p-1.5 rounded-lg hover:bg-white/20 transition-colors" onClick={() => { setShowNoteForm(false); setEditNote(null); }}>
+                      <button type="button" className="p-1.5 rounded-lg hover:bg-white/20 transition-colors" onClick={() => { setShowNoteForm(false); setEditNote(null); setShowDealDropdown(false); setNoteDealSelections(new Set()); setNoteDealOnlySelected(false); setNoteDestinationError(""); }}>
                         <X className="w-5 h-5 text-white" />
                       </button>
                     </div>
@@ -2812,6 +2902,73 @@ export default function ContactEmailLogs({
                       className="flex-1 flex flex-col overflow-hidden"
                     >
                       <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                        <div className="space-y-2" ref={dealDropdownRef} onMouseDown={(e) => e.stopPropagation()}>
+                          <div className="rounded-2xl border-2 border-gray-200 bg-white p-4">
+                            <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                              Show this note in
+                            </p>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowDealDropdown((v) => !v)}
+                                className="w-full flex items-center justify-between rounded-xl border border-gray-300 px-3 py-2 text-sm bg-white hover:border-blue-400"
+                              >
+                                <span className="truncate">
+                                  {selectedDealsText}
+                                </span>
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    showDealDropdown ? "rotate-180" : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+                              {showDealDropdown && (
+                                <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+                                  {noteEligibleDeals.map((deal) => (
+                                    <label
+                                      key={deal.id}
+                                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={noteDealSelections.has(deal.id)}
+                                        onChange={() => toggleNoteDeal(deal.id)}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm">
+                                        {deal.name}
+                                      </span>
+                                    </label>
+                                  ))}
+                                  <div className="border-t border-gray-200 my-1" />
+                                  <label className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer bg-gray-50">
+                                    <input
+                                      type="checkbox"
+                                      checked={noteDealOnlySelected}
+                                      onChange={toggleNoteDealOnly}
+                                      disabled={noteDealSelections.size > 0}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-sm font-medium">
+                                      This Contact Only
+                                    </span>
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="space-y-2">
                           <label className="text-sm text-gray-700 flex items-center gap-2">
                             <FileText className="w-4 h-4 text-indigo-600" />
@@ -2835,7 +2992,11 @@ export default function ContactEmailLogs({
                             placeholder="Write your note..."
                           />
                         </div>
-
+                        {noteDestinationError && (
+                          <p className="text-xs text-red-600 pt-1">
+                            {noteDestinationError}
+                          </p>
+                        )}
                       </div>
                       {/* ACTIONS */}
                       <div className="flex-shrink-0 flex gap-3 p-6 border-t border-gray-200 bg-white">
@@ -2845,6 +3006,10 @@ export default function ContactEmailLogs({
                           onClick={() => {
                             setShowNoteForm(false);
                             setEditNote(null);
+                            setShowDealDropdown(false);
+                            setNoteDealSelections(new Set());
+                            setNoteDealOnlySelected(false);
+                            setNoteDestinationError("");
                           }}
                         >
                           Cancel
